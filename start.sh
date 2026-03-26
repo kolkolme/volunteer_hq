@@ -125,6 +125,21 @@ else
   fi
 fi
 
+# ── установка python3-venv (нужен отдельно на Debian/Ubuntu) ─────
+step "Проверка python3-venv..."
+if [ "$OS" = "debian" ]; then
+  # Определяем версию Python и устанавливаем нужный пакет venv
+  PY_MINOR=$(python3 -c "import sys; print(sys.version_info.minor)")
+  PY_MAJOR=$(python3 -c "import sys; print(sys.version_info.major)")
+  VENV_PKG="python${PY_MAJOR}.${PY_MINOR}-venv"
+  if ! dpkg -l "$VENV_PKG" &>/dev/null 2>&1; then
+    info "Установка $VENV_PKG..."
+    sudo apt-get install -y "$VENV_PKG" python3-venv || sudo apt-get install -y python3-venv
+  else
+    info "$VENV_PKG уже установлен"
+  fi
+fi
+
 # ── проверка pip ──────────────────────────────────────────────────
 step "Проверка pip..."
 if ! python3 -m pip --version &>/dev/null; then
@@ -156,8 +171,14 @@ fi
 
 step "Создание виртуального окружения Python..."
 VENV="$ROOT/.venv"
-if [ ! -d "$VENV" ]; then
+if [ ! -d "$VENV" ] || [ ! -f "$VENV/bin/activate" ]; then
+  # Удаляем битое окружение если есть
+  [ -d "$VENV" ] && rm -rf "$VENV"
   python3 -m venv "$VENV"
+  # Проверяем что activate создался
+  if [ ! -f "$VENV/bin/activate" ]; then
+    error "Не удалось создать venv. Убедитесь что установлен python3-venv:\n  sudo apt-get install python3-venv  # Debian/Ubuntu\n  sudo pacman -S python  # Arch\n  sudo dnf install python3  # Fedora"
+  fi
   info ".venv создан"
 else
   info ".venv уже существует"
