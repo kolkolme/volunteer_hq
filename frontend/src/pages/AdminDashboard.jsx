@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react'
 import api from '../services/api'
 import { grantPermit, revokePermit } from '../services/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { Users, Calendar, TrendingUp, Award, MapPin, AlertTriangle, ShieldCheck } from 'lucide-react'
+import { Users, Calendar, TrendingUp, Award, MapPin, AlertTriangle, ShieldCheck, Trophy } from 'lucide-react'
 import EventCreationForm from '../components/EventCreationForm'
+import RatingLeaderboard from '../components/RatingLeaderboard'
 
 // ────────────────────────────────────────────────────────────────
 // Permit Management Component
@@ -197,9 +198,19 @@ const AdminDashboard = () => {
           <ShieldCheck className="w-4 h-4" />
           Разрешения
         </button>
+        <button
+          onClick={() => setActiveTab('rating')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+            activeTab === 'rating' ? 'bg-purple-600 text-white shadow-lg' : 'glass-panel glass-subtitle hover:opacity-80'
+          }`}
+        >
+          <Trophy className="w-4 h-4" />
+          Рейтинг
+        </button>
       </div>
 
       {activeTab === 'permits' && <PermitManagement />}
+      {activeTab === 'rating' && <RatingLeaderboard currentUser={null} />}
       {activeTab === 'overview' && <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-panel rounded-2xl p-6 border border-white border-opacity-30 bg-gradient-to-br from-blue-500 from-opacity-10 to-cyan-500 to-opacity-10 hover:shadow-lg hover:shadow-blue-500/20 hover:border-opacity-50 transition-all duration-300">

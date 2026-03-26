@@ -110,8 +110,8 @@ class LectureRating(models.Model):
         ]
 
     def clean(self):
-        if not (1 <= self.rating <= 5):
-            raise ValidationError('Оценка должна быть от 1 до 5.')
+        if not (1 <= self.rating <= 10):
+            raise ValidationError('Оценка должна быть от 1 до 10.')
 
     def __str__(self):
         return f'{self.user} rated {self.event} — {self.rating}/5'

@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from apps.users.views import MeView, RoleViewSet, UserViewSet, CustomTokenObtainPairView, LogoutView, RegisterView, VolunteerApplicationViewSet, ChatRoomViewSet, MessageViewSet, ComplaintViewSet
 from apps.geography.views import CityViewSet
 from apps.events.views import EventTypeViewSet, EventViewSet, EventParticipationViewSet, MyEventsView, MyStatsView, my_participation_accept, my_participation_decline, MyParticipationsView, LectureRatingViewSet, TagViewSet, LectureMaterialViewSet
-from apps.dashboard.views import DashboardSummaryView, DashboardActivityView, DashboardPodiumView, DashboardCalendarView, DashboardCitiesView, DashboardProblemsView
+from apps.dashboard.views import DashboardSummaryView, DashboardActivityView, DashboardPodiumView, DashboardCalendarView, DashboardCitiesView, DashboardProblemsView, VolunteerRatingLeaderboardView
 
 router = DefaultRouter()
 router.register('roles', RoleViewSet, basename='role')
@@ -41,5 +41,6 @@ urlpatterns = [
     path('api/v1/dashboard/calendar/', DashboardCalendarView.as_view(), name='dashboard-calendar'),
     path('api/v1/dashboard/cities/', DashboardCitiesView.as_view(), name='dashboard-cities'),
     path('api/v1/dashboard/problems/', DashboardProblemsView.as_view(), name='dashboard-problems'),
+    path('api/v1/dashboard/ratings/', VolunteerRatingLeaderboardView.as_view(), name='dashboard-ratings'),
     path('api/v1/', include(router.urls)),
 ]

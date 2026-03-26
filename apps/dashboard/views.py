@@ -1,13 +1,13 @@
 from datetime import timedelta
 
-from django.db.models import Count, F, FloatField, IntegerField, Q, Value
+from django.db.models import Avg, Count, F, FloatField, IntegerField, Q, Sum, Value
 from django.db.models.functions import Cast, Coalesce
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.events.models import Event, EventParticipation, EventStatus, ParticipationStatus
+from apps.events.models import Event, EventParticipation, EventStatus, LectureRating, ParticipationStatus
 from apps.geography.models import City
 from apps.users.permissions import IsAdminOrAbove
 from apps.users.models import User
@@ -185,3 +185,30 @@ class DashboardProblemsView(DashboardBaseView):
             ).filter(accepted_count__gt=0, attended_count__lt=F('accepted_count')).count(),
         }
         return Response(data)
+
+
+class VolunteerRatingLeaderboardView(APIView):
+    """Top-10 volunteers by rating. Available to all authenticated users."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        volunteers = User.objects.filter(
+            role__code='volunteer',
+            is_active=True,
+        ).annotate(
+            lecture_count=Count('created_events', distinct=True),
+            total_stars=Coalesce(Sum('created_events__ratings__rating'), Value(0)),
+        ).filter(lecture_count__gt=0).order_by('-avg_rating', '-lecture_count')[:10]
+
+        data = [
+            {
+                'rank': idx + 1,
+                'full_name': v.full_name,
+                'city': v.city.title if v.city else None,
+                'avg_rating': round(v.avg_rating, 2),
+                'lecture_count': v.lecture_count,
+                'total_stars': v.total_stars,
+            }
+            for idx, v in enumerate(volunteers)
+        ]
+        return Response({'leaderboard': data})

@@ -75,6 +75,10 @@ export const createChat = (participant_id) => api.post('/api/v1/chats/', { parti
 export const getMessages = (room) => api.get('/api/v1/messages/', { params: { room } })
 export const sendMessage = (room, content) => api.post('/api/v1/messages/', { room, content })
 export const markMessagesRead = (room) => api.post('/api/v1/messages/mark_read/', { room })
+export const searchChatUsers = (q) => api.get('/api/v1/users/chat-search/', { params: { q } })
+
+// ---- Rating Leaderboard ----
+export const getLeaderboard = () => api.get('/api/v1/dashboard/ratings/')
 
 // ---- Complaints ----
 export const getComplaints = (params) => api.get('/api/v1/complaints/', { params })

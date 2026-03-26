@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-import api, { getChats, createChat, getMessages, sendMessage, markMessagesRead, getTags } from '../services/api'
+import api, { getTags, createChat } from '../services/api'
+import ChatWidget from '../components/ChatWidget'
 import {
   BookOpen,
   Calendar,
@@ -11,16 +12,17 @@ import {
   MessageSquare,
   Save,
   Search,
-  Send,
   Settings,
   Sparkles,
   Star,
   Tag,
+  Trophy,
   User,
   UserCheck,
 } from 'lucide-react'
 import GlassInput from '../components/ui/GlassInput'
 import IosButton from '../components/ui/IosButton'
+import RatingLeaderboard from '../components/RatingLeaderboard'
 
 const TAGS = [
   'Английский', 'Математика', 'Программирование', 'Финансы', 'Кибербезопасность',
@@ -31,6 +33,7 @@ const TAB_ITEMS = [
   { id: 'profile', label: 'Личный кабинет', icon: User },
   { id: 'lectures', label: 'Лекции', icon: Calendar },
   { id: 'history', label: 'Прош. лекции', icon: BookOpen },
+  { id: 'rating', label: 'Рейтинг', icon: Trophy },
   { id: 'volunteer', label: 'Стать волонтёром', icon: UserCheck },
   { id: 'chats', label: 'Чаты', icon: MessageSquare },
   { id: 'appearance', label: 'Настройки', icon: Settings },
@@ -42,125 +45,7 @@ const APPEARANCE_OPTIONS = [
   { id: 'beige', label: 'Бежевая', palette: 'beige', theme: 'light' },
 ]
 
-const UserChatsTab = ({ user }) => {
-  const [rooms, setRooms] = useState([])
-  const [activeRoom, setActiveRoom] = useState(null)
-  const [messages, setMessages] = useState([])
-  const [text, setText] = useState('')
-  const [loading, setLoading] = useState(true)
-  const messagesEndRef = useRef(null)
 
-  useEffect(() => {
-    getChats().then((res) => {
-      setRooms(res.data.results || res.data)
-      setLoading(false)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!activeRoom) return
-    markMessagesRead(activeRoom.id).catch(() => {})
-    getMessages(activeRoom.id).then((res) => {
-      setMessages(res.data.results || res.data)
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
-    })
-  }, [activeRoom])
-
-  const handleSend = async (e) => {
-    e.preventDefault()
-    if (!text.trim() || !activeRoom) return
-    try {
-      const res = await sendMessage(activeRoom.id, text.trim())
-      setMessages((prev) => [...prev, res.data])
-      setText('')
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
-    } catch {}
-  }
-
-  if (loading) return <div className="text-center py-8 opacity-60">Загрузка...</div>
-
-  return (
-    <div className="glass-card rounded-2xl overflow-hidden">
-      <div className="flex items-center gap-3 p-4 border-b border-white/10">
-        <MessageSquare className="w-5 h-5 opacity-60" />
-        <h3 className="text-xl font-bold">Чаты</h3>
-      </div>
-      <div className="flex h-[480px]">
-        {/* Sidebar */}
-        <div className="w-64 shrink-0 border-r border-white/10 overflow-y-auto p-2 space-y-1">
-          {rooms.length === 0 && (
-            <p className="text-sm text-center opacity-50 py-4">Нет чатов</p>
-          )}
-          {rooms.map((room) => {
-            const other = room.participants?.find((p) => p.id !== user?.id)
-            return (
-              <button
-                key={room.id}
-                onClick={() => setActiveRoom(room)}
-                className={`w-full text-left p-3 rounded-xl transition-all ${
-                  activeRoom?.id === room.id ? 'bg-blue-500 text-white' : 'glass-card hover:opacity-80'
-                }`}
-              >
-                <p className="font-medium text-sm truncate">{other?.full_name || 'Чат'}</p>
-                {room.last_message && (
-                  <p className="text-xs opacity-70 truncate">{room.last_message.content}</p>
-                )}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Chat area */}
-        <div className="flex-1 flex flex-col">
-          {!activeRoom ? (
-            <div className="flex-1 flex items-center justify-center opacity-50 text-sm">
-              Выберите чат
-            </div>
-          ) : (
-            <>
-              <div className="p-3 border-b border-white/10">
-                <p className="font-semibold text-sm">
-                  {activeRoom.participants?.find((p) => p.id !== user?.id)?.full_name || 'Чат'}
-                </p>
-              </div>
-              <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.sender?.id === user?.id ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm ${
-                      msg.sender?.id === user?.id
-                        ? 'bg-blue-500 text-white'
-                        : 'glass-card'
-                    }`}>
-                      {msg.sender?.id !== user?.id && (
-                        <p className="text-xs font-medium mb-0.5 opacity-70">{msg.sender?.full_name}</p>
-                      )}
-                      {msg.content}
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </div>
-              <form onSubmit={handleSend} className="p-3 border-t border-white/10 flex gap-2">
-                <GlassInput
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Сообщение..."
-                  className="flex-1"
-                />
-                <button type="submit" className="p-2 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors">
-                  <Send className="w-4 h-4" />
-                </button>
-              </form>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 const UserDashboard = () => {
   const { user, refreshUser } = useAuth()
@@ -298,6 +183,14 @@ const UserDashboard = () => {
       setApplyingId(null)
     }
   }
+
+  const handleChatWithVolunteer = useCallback(async (volunteerId) => {
+    if (!volunteerId) return
+    try {
+      await createChat(volunteerId)
+      setActiveTab('chats')
+    } catch {}
+  }, [])
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
@@ -622,17 +515,44 @@ const UserDashboard = () => {
                             </span>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-sm opacity-60 mr-2">Оценка:</span>
-                            {[1, 2, 3, 4, 5].map((rating) => (
-                              <button
-                                key={rating}
-                                onClick={() => handleRatingChange(event.id, rating)}
-                                className={`p-2 rounded-xl transition-all ${feedback.rating >= rating ? 'bg-amber-400 text-white' : 'glass-card'}`}
-                              >
-                                <Star className="w-4 h-4" />
-                              </button>
-                            ))}
+                          <div className="space-y-1">
+                            {(() => {
+                              const now = new Date()
+                              const unlockAt = event.date_end ? new Date(new Date(event.date_end).getTime() + 60 * 60 * 1000) : null
+                              const locked = unlockAt && now < unlockAt
+                              return (
+                                <>
+                                  <div className="flex flex-wrap items-center gap-1">
+                                    <span className="text-sm opacity-60 mr-1">Оценка:</span>
+                                    {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                                      <button
+                                        key={n}
+                                        disabled={locked}
+                                        onClick={() => !locked && handleRatingChange(event.id, n)}
+                                        title={locked ? `Доступно после ${unlockAt.toLocaleString('ru-RU')}` : `${n} из 10`}
+                                        className={`w-7 h-7 rounded-lg text-xs font-bold transition-all ${
+                                          locked
+                                            ? 'opacity-30 cursor-not-allowed glass-card'
+                                            : feedback.rating >= n
+                                              ? 'bg-amber-400 text-white shadow-sm'
+                                              : 'glass-card hover:bg-amber-100'
+                                        }`}
+                                      >
+                                        {n}
+                                      </button>
+                                    ))}
+                                    {feedback.rating > 0 && (
+                                      <span className="ml-2 text-sm font-semibold text-amber-500">{feedback.rating}/10</span>
+                                    )}
+                                  </div>
+                                  {locked && (
+                                    <p className="text-xs opacity-50">
+                                      ⏳ Оценку можно поставить через 1 ч после окончания — после {unlockAt.toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+                                    </p>
+                                  )}
+                                </>
+                              )
+                            })()}
                           </div>
 
                           <textarea
@@ -643,7 +563,11 @@ const UserDashboard = () => {
                           />
 
                           <div className="flex flex-wrap gap-3">
-                            <button className="btn-ios px-5 py-3 inline-flex items-center gap-2">
+                            <button
+                              className="btn-ios px-5 py-3 inline-flex items-center gap-2"
+                              onClick={() => handleChatWithVolunteer(event.created_by?.id)}
+                              disabled={!event.created_by?.id}
+                            >
                               <MessageSquare className="w-4 h-4" /> Личный чат с волонтёром
                             </button>
                             <button className="btn-ios px-5 py-3 inline-flex items-center gap-2">
@@ -873,8 +797,12 @@ const UserDashboard = () => {
             </div>
           )}
 
+          {activeTab === 'rating' && (
+            <RatingLeaderboard currentUser={user} />
+          )}
+
           {activeTab === 'chats' && (
-            <UserChatsTab user={user} />
+            <ChatWidget user={user} color="blue" />
           )}
 
           {activeTab === 'appearance' && (

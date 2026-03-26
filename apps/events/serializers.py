@@ -176,6 +176,15 @@ class EventDetailSerializer(EventListSerializer):
         fields = EventListSerializer.Meta.fields + ['participants']
 
 
+class MyParticipationListSerializer(serializers.ModelSerializer):
+    """Used by MyParticipationsView — returns full nested event data."""
+    event = EventListSerializer(read_only=True)
+
+    class Meta:
+        model = EventParticipation
+        fields = ['id', 'event', 'status', 'created_at', 'updated_at']
+
+
 class MyStatsSerializer(serializers.Serializer):
     events_total = serializers.IntegerField()
     accepted_events = serializers.IntegerField()
@@ -231,13 +240,23 @@ class LectureRatingSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'user', 'event_title', 'created_at', 'updated_at']
 
     def validate_rating(self, value):
-        if not (1 <= value <= 5):
-            raise serializers.ValidationError('Оценка должна быть от 1 до 5.')
+        if not (1 <= value <= 10):
+            raise serializers.ValidationError('Оценка должна быть от 1 до 10.')
         return value
 
-    def create(self, validated_data):
-        validated_data['user'] = self.context['request'].user
-        return super().create(validated_data)
+    def validate(self, attrs):
+        from django.utils import timezone as tz
+        from datetime import timedelta
+        request = self.context.get('request')
+        instance = getattr(self, 'instance', None)
+        event = attrs.get('event', getattr(instance, 'event', None))
+        if event and event.date_end:
+            unlock_at = event.date_end + timedelta(hours=1)
+            if tz.now() < unlock_at:
+                raise serializers.ValidationError(
+                    {'event': f'Оценку можно оставить только через 1 час после окончания лекции (после {unlock_at.strftime("%d.%m.%Y %H:%M")}).'}
+                )
+        return attrs
 
     def update(self, instance, validated_data):
         validated_data.pop('user', None)

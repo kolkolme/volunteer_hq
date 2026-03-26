@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
-import { getTags, createMaterial, getChats, getMessages, sendMessage, markMessagesRead } from '../services/api'
+import { getTags, createMaterial } from '../services/api'
+import ChatWidget from '../components/ChatWidget'
+import RatingLeaderboard from '../components/RatingLeaderboard'
 import GlassCard from '../components/ui/GlassCard'
 import GlassInput from '../components/ui/GlassInput'
 import IosButton from '../components/ui/IosButton'
 import {
   BookOpen, Calendar, CheckCircle, Clock, MessageSquare,
-  Plus, Send, Sparkles, Star, Tag, Users, FileText, ClipboardList, Search,
+  Plus, Sparkles, Star, Tag, Trophy, Users, FileText, ClipboardList, Search,
 } from 'lucide-react'
 
 // ──────────────────────────────────────────────
@@ -20,6 +22,7 @@ const TABS = [
   { id: 'create',      label: 'Создать лекцию', icon: Plus },
   { id: 'accept',      label: 'Принять лекцию', icon: ClipboardList },
   { id: 'stats',       label: 'Статистика',     icon: Star },
+  { id: 'rating',      label: 'Рейтинг',          icon: Trophy },
   { id: 'chats',       label: 'Чаты',           icon: MessageSquare },
 ]
 
@@ -531,84 +534,7 @@ const StatsTab = () => {
 }
 
 // ──────────────────────────────────────────────
-// Chats Tab
-// ──────────────────────────────────────────────
-const ChatsTab = ({ user }) => {
-  const [rooms, setRooms] = useState([])
-  const [activeRoom, setActiveRoom] = useState(null)
-  const [messages, setMessages] = useState([])
-  const [text, setText] = useState('')
-  const [loading, setLoading] = useState(true)
-  const messagesEndRef = useRef(null)
 
-  useEffect(() => {
-    getChats().then((res) => { setRooms(res.data.results || res.data); setLoading(false) })
-  }, [])
-
-  useEffect(() => {
-    if (!activeRoom) return
-    markMessagesRead(activeRoom.id).catch(() => {})
-    getMessages(activeRoom.id).then((res) => {
-      setMessages(res.data.results || res.data)
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
-    })
-  }, [activeRoom])
-
-  const handleSend = async (e) => {
-    e.preventDefault()
-    if (!text.trim() || !activeRoom) return
-    try {
-      const res = await sendMessage(activeRoom.id, text.trim())
-      setMessages((prev) => [...prev, res.data])
-      setText('')
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
-    } catch {}
-  }
-
-  if (loading) return <p className="text-center py-8 glass-subtitle">Загрузка...</p>
-  return (
-    <div className="flex gap-4 h-[480px]">
-      <div className="w-56 shrink-0 flex flex-col gap-1 overflow-y-auto">
-        {!rooms.length && <p className="text-sm text-center glass-subtitle py-4">Нет чатов</p>}
-        {rooms.map((room) => {
-          const other = room.participants?.find((p) => p.id !== user?.id)
-          return (
-            <button key={room.id} onClick={() => setActiveRoom(room)} className={`w-full text-left p-3 rounded-xl transition-all ${activeRoom?.id === room.id ? 'bg-amber-500 text-white' : 'glass-card hover:opacity-80'}`}>
-              <p className="font-medium text-sm truncate">{other?.full_name || 'Чат'}</p>
-              {room.last_message && <p className="text-xs opacity-70 truncate">{room.last_message.content}</p>}
-            </button>
-          )
-        })}
-      </div>
-      <div className="flex-1 flex flex-col glass-card rounded-2xl overflow-hidden">
-        {!activeRoom ? (
-          <div className="flex-1 flex items-center justify-center glass-subtitle text-sm text-center px-6">Выберите чат слева</div>
-        ) : (
-          <>
-            <div className="p-3 border-b border-white/10">
-              <p className="font-semibold glass-title text-sm">{activeRoom.participants?.find((p) => p.id !== user?.id)?.full_name || 'Чат'}</p>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender?.id === user?.id ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] px-3 py-2 rounded-2xl text-sm ${msg.sender?.id === user?.id ? 'bg-amber-500 text-white' : 'glass-card glass-title'}`}>
-                    {msg.sender?.id !== user?.id && <p className="text-xs font-medium mb-0.5 opacity-70">{msg.sender?.full_name}</p>}
-                    {msg.content}
-                  </div>
-                </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-            <form onSubmit={handleSend} className="p-3 border-t border-white/10 flex gap-2">
-              <GlassInput value={text} onChange={(e) => setText(e.target.value)} placeholder="Сообщение..." className="flex-1" />
-              <button type="submit" className="p-2 rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition-colors"><Send className="w-4 h-4" /></button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
 
 // ──────────────────────────────────────────────
 // Main Student Dashboard
@@ -663,7 +589,8 @@ const Dashboard = () => {
         {activeTab === 'create'      && <CreateLectureTab />}
         {activeTab === 'accept'      && <AcceptLectureTab />}
         {activeTab === 'stats'       && <StatsTab />}
-        {activeTab === 'chats'       && <ChatsTab user={user} />}
+        {activeTab === 'rating'      && <RatingLeaderboard currentUser={user} />}
+        {activeTab === 'chats'       && <ChatWidget user={user} color="amber" />}
       </GlassCard>
     </div>
   )

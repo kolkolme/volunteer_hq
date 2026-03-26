@@ -16,6 +16,7 @@ from apps.events.serializers import (
     EventDetailSerializer,
     EventCreateUpdateSerializer,
     EventParticipationSerializer,
+    MyParticipationListSerializer,
     LectureRatingSerializer,
     MyStatsSerializer,
     EventCompleteSerializer,
@@ -304,10 +305,31 @@ class MyParticipationsView(APIView):
     def get(self, request):
         participations = EventParticipation.objects.filter(
             user=request.user
-        ).select_related('event', 'event__city', 'event__event_type').order_by('-created_at')
+        ).select_related('event', 'event__city', 'event__event_type', 'event__created_by').order_by('-created_at')
 
-        serializer = EventParticipationSerializer(participations, many=True)
+        serializer = MyParticipationListSerializer(participations, many=True)
         return Response(serializer.data)
+
+
+def recalculate_volunteer_avg_rating(volunteer):
+    """
+    avg_rating = mean of per-lecture averages.
+    Each lecture average = sum of stars for that lecture / number of raters for that lecture.
+    """
+    from django.db.models import Avg, Count
+    # Group ratings by event, get avg rating per event, then avg those
+    per_lecture = (
+        LectureRating.objects
+        .filter(event__created_by=volunteer)
+        .values('event')
+        .annotate(lecture_avg=Avg('rating'))
+    )
+    if not per_lecture:
+        volunteer.avg_rating = 0.0
+    else:
+        total = sum(row['lecture_avg'] for row in per_lecture)
+        volunteer.avg_rating = round(total / len(per_lecture), 2)
+    volunteer.save(update_fields=['avg_rating'])
 
 
 class LectureRatingViewSet(viewsets.ModelViewSet):
@@ -316,7 +338,7 @@ class LectureRatingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = LectureRating.objects.select_related('event', 'user', 'user__city').all()
+        qs = LectureRating.objects.select_related('event', 'event__created_by', 'user', 'user__city').all()
         if user.role.code in {'volunteer', 'user'}:
             return qs.filter(user=user)
         return qs
@@ -330,19 +352,29 @@ class LectureRatingViewSet(viewsets.ModelViewSet):
         return context
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        instance = serializer.save(user=self.request.user)
+        if instance.event.created_by:
+            recalculate_volunteer_avg_rating(instance.event.created_by)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.user != request.user and request.user.role.code not in {'admin', 'superuser'}:
             return Response({'detail': 'Нельзя редактировать чужую оценку.'}, status=status.HTTP_403_FORBIDDEN)
-        return super().update(request, *args, **kwargs)
+        response = super().update(request, *args, **kwargs)
+        instance.refresh_from_db()
+        if instance.event.created_by:
+            recalculate_volunteer_avg_rating(instance.event.created_by)
+        return response
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance.user != request.user and request.user.role.code not in {'admin', 'superuser'}:
             return Response({'detail': 'Нельзя удалять чужую оценку.'}, status=status.HTTP_403_FORBIDDEN)
-        return super().destroy(request, *args, **kwargs)
+        volunteer = instance.event.created_by
+        response = super().destroy(request, *args, **kwargs)
+        if volunteer:
+            recalculate_volunteer_avg_rating(volunteer)
+        return response
 
 
 class TagViewSet(viewsets.ModelViewSet):

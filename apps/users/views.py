@@ -15,6 +15,7 @@ from apps.users.serializers import (
     UserCreateUpdateSerializer,
     UserDetailSerializer,
     UserListSerializer,
+    UserShortSerializer,
     UserStatsSerializer,
     MeSerializer,
     MeUpdateSerializer,
@@ -122,6 +123,8 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in {'list', 'retrieve', 'stats', 'events'}:
             return [IsSelfOrAdminOrAbove()]
+        if self.action == 'chat_search':
+            return [IsAuthenticated()]
         return [IsAdminOrAbove()]
 
     def get_serializer_context(self):
@@ -158,6 +161,19 @@ class UserViewSet(viewsets.ModelViewSet):
             'activity_score': activity_score,
         })
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='chat-search', permission_classes=[IsAuthenticated])
+    def chat_search(self, request):
+        """Search users by name/username for starting a chat. Available to all authenticated users."""
+        from django.db.models import Q as DQ
+        q = request.query_params.get('q', '').strip()
+        if len(q) < 2:
+            return Response([])
+        users = User.objects.filter(
+            DQ(first_name__icontains=q) | DQ(last_name__icontains=q) | DQ(username__icontains=q),
+            is_active=True,
+        ).exclude(pk=request.user.pk).select_related('city', 'role')[:20]
+        return Response(UserShortSerializer(users, many=True).data)
 
     @action(detail=True, methods=['get'])
     def events(self, request, pk=None):
