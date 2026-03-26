@@ -15,7 +15,7 @@ import { MessageSquare, AlertTriangle, ClipboardList, Check, X, Trophy } from 'l
 
 const TABS = [
   { id: 'complaints', label: 'Жалобы', icon: AlertTriangle },
-  { id: 'events', label: 'Мероприятия', icon: ClipboardList },
+  { id: 'events', label: 'Лекции', icon: ClipboardList },
   { id: 'rating', label: 'Рейтинг', icon: Trophy },
   { id: 'chats', label: 'Чаты', icon: MessageSquare },
 ]
@@ -128,23 +128,26 @@ const EventsTab = () => {
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [lectureTypeId, setLectureTypeId] = useState('')
   const [form, setForm] = useState({
     title: '', description: '', date_start: '', date_end: '',
     volunteers_count_min: 1, volunteers_count_max: 5,
     event_type: '',
   })
-  const [eventTypes, setEventTypes] = useState([])
   const [submitError, setSubmitError] = useState('')
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [evRes, typeRes] = await Promise.all([
-          api.get('/api/v1/events/'),
-          api.get('/api/v1/event-types/'),
-        ])
+        const typeRes = await api.get('/api/v1/event-types/')
+        const types = typeRes.data.results || typeRes.data
+        const lectureType = types.find((t) => t.code === 'lecture')
+        const lectureId = lectureType?.id || ''
+        setLectureTypeId(lectureId)
+        setForm((prev) => ({ ...prev, event_type: lectureId }))
+        const params = lectureId ? { event_type: lectureId } : {}
+        const evRes = await api.get('/api/v1/events/', { params })
         setEvents(evRes.data.results || evRes.data)
-        setEventTypes(typeRes.data.results || typeRes.data)
       } finally {
         setLoading(false)
       }
@@ -159,7 +162,7 @@ const EventsTab = () => {
       const res = await api.post('/api/v1/events/', { ...form, status: 'planned' })
       setEvents((prev) => [res.data, ...prev])
       setCreating(false)
-      setForm({ title: '', description: '', date_start: '', date_end: '', volunteers_count_min: 1, volunteers_count_max: 5, event_type: '' })
+      setForm({ title: '', description: '', date_start: '', date_end: '', volunteers_count_min: 1, volunteers_count_max: 5, event_type: lectureTypeId })
     } catch (e) {
       setSubmitError(JSON.stringify(e.response?.data || 'Ошибка создания'))
     }
@@ -168,7 +171,7 @@ const EventsTab = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold glass-title">Мероприятия</h3>
+        <h3 className="font-semibold glass-title">Лекции</h3>
         <IosButton size="sm" onClick={() => setCreating(!creating)}>
           {creating ? 'Отмена' : '+ Создать'}
         </IosButton>
@@ -189,24 +192,15 @@ const EventsTab = () => {
                 <GlassInput type="datetime-local" value={form.date_end} onChange={(e) => setForm({ ...form, date_end: e.target.value })} required className="w-full" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs glass-subtitle mb-1 block">Тип</label>
-                <select className="glass-input w-full rounded-xl px-3 py-2 text-sm" value={form.event_type} onChange={(e) => setForm({ ...form, event_type: e.target.value })} required>
-                  <option value="">Выберите тип</option>
-                  {eventTypes.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs glass-subtitle mb-1 block">Мин/Макс волонтёров</label>
-                <div className="flex gap-2">
-                  <GlassInput type="number" min={1} value={form.volunteers_count_min} onChange={(e) => setForm({ ...form, volunteers_count_min: +e.target.value })} className="w-full" />
-                  <GlassInput type="number" min={1} value={form.volunteers_count_max} onChange={(e) => setForm({ ...form, volunteers_count_max: +e.target.value })} className="w-full" />
-                </div>
+            <div>
+              <label className="text-xs glass-subtitle mb-1 block">Мин/Макс волонтёров</label>
+              <div className="flex gap-2">
+                <GlassInput type="number" min={1} value={form.volunteers_count_min} onChange={(e) => setForm({ ...form, volunteers_count_min: +e.target.value })} className="w-full" />
+                <GlassInput type="number" min={1} value={form.volunteers_count_max} onChange={(e) => setForm({ ...form, volunteers_count_max: +e.target.value })} className="w-full" />
               </div>
             </div>
             {submitError && <p className="text-red-500 text-xs">{submitError}</p>}
-            <IosButton type="submit" className="w-full">Создать мероприятие</IosButton>
+            <IosButton type="submit" className="w-full">Создать лекцию</IosButton>
           </form>
         </GlassCard>
       )}
@@ -214,7 +208,7 @@ const EventsTab = () => {
       {loading ? (
         <div className="glass-subtitle text-center py-8">Загрузка...</div>
       ) : events.length === 0 ? (
-        <div className="glass-subtitle text-center py-8">Мероприятий нет</div>
+        <div className="glass-subtitle text-center py-8">Лекций нет</div>
       ) : (
         <div className="space-y-3">
           {events.slice(0, 20).map((ev) => (

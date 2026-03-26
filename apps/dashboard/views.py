@@ -143,10 +143,8 @@ class VolunteerRatingLeaderboardView(APIView):
         data = [
             {
                 'rank': idx + 1,
-                'full_name': v.full_name,
+                'username': v.username,
                 'avg_rating': round(v.avg_rating, 2),
-                'lecture_count': v.lecture_count,
-                'total_stars': v.total_stars,
             }
             for idx, v in enumerate(volunteers)
         ]

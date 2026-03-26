@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
-import { Bell, Calendar, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { Calendar, CheckCircle, XCircle, Clock } from 'lucide-react'
 
 const Profile = () => {
   const { user } = useAuth()
   const [participations, setParticipations] = useState([])
-  const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -17,7 +16,6 @@ const Profile = () => {
     try {
       const participationsResponse = await api.get('/api/v1/my/participations/')
       setParticipations(participationsResponse.data.results || participationsResponse.data)
-      setNotifications([]) // Пока уведомлений нет
     } catch (error) {
       console.error('Failed to fetch profile data:', error)
     } finally {
@@ -94,39 +92,6 @@ const Profile = () => {
               <p><span className="font-medium">Завершено:</span> {participations.filter(p => p.status === 'attended').length}</p>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Notifications */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 flex items-center">
-            <Bell className="h-5 w-5 mr-2" />
-            Уведомления
-          </h3>
-        </div>
-        <div className="divide-y divide-gray-200">
-          {notifications.length > 0 ? (
-            notifications.map((notification) => (
-              <div key={notification.id} className="px-6 py-4">
-                <div className="flex items-start">
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">{notification.message}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(notification.created_at).toLocaleString('ru-RU')}
-                    </p>
-                  </div>
-                  {!notification.is_read && (
-                    <span className="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
-                  )}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="px-6 py-4 text-center text-gray-500">
-              Нет новых уведомлений
-            </div>
-          )}
         </div>
       </div>
 
