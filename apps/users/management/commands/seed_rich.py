@@ -19,7 +19,6 @@ from apps.events.models import (
     Event, EventParticipation, EventStatus, EventTag, EventType,
     LectureMaterial, LectureRating, MaterialType, ParticipationStatus, Tag, TagType,
 )
-from apps.geography.models import City
 from apps.users.models import Role, User
 
 
@@ -186,7 +185,6 @@ class Command(BaseCommand):
         rng = random.Random(1337)
 
         roles = {r.code: r for r in Role.objects.all()}
-        cities = list(City.objects.all())
         event_types = list(EventType.objects.all())
         tags = list(Tag.objects.all())
 
@@ -195,14 +193,14 @@ class Command(BaseCommand):
         # ── 1. Дополнительные волонтёры ──────────────────────────────
         self.stdout.write('  Создаём волонтёров...')
         extra_volunteers = self._bulk_users(
-            rng, roles['volunteer'], cities, 'vol_extra',
+            rng, roles['volunteer'], 'vol_extra',
             count=40, password='vol123456',
         )
 
         # ── 2. Обычные пользователи-слушатели ────────────────────────
         self.stdout.write('  Создаём слушателей (~400)...')
         listeners = self._bulk_users(
-            rng, roles['user'], cities, 'listener',
+            rng, roles['user'], 'listener',
             count=400, password='user12345',
         )
 
@@ -221,14 +219,11 @@ class Command(BaseCommand):
             start = now - timedelta(days=days_ago, hours=rng.randint(0, 6))
             end = start + timedelta(hours=rng.randint(1, 3))
             volunteer = rng.choice(all_volunteers)
-            city = rng.choice(cities)
             event_type = rng.choice(event_types)
             events_data.append(dict(
                 event_type=event_type,
                 title=rng.choice(LECTURE_TITLES) + (f' (выпуск {i // 10 + 1})' if i % 10 == 0 else ''),
                 description=rng.choice(DESCRIPTIONS),
-                address=f'https://meet.google.com/demo-{i:04d}',
-                city=city,
                 date_start=start,
                 date_end=end,
                 status=EventStatus.COMPLETED,
@@ -243,14 +238,11 @@ class Command(BaseCommand):
             start = now + timedelta(days=days_ahead, hours=rng.randint(9, 20))
             end = start + timedelta(hours=rng.randint(1, 3))
             volunteer = rng.choice(all_volunteers)
-            city = rng.choice(cities)
             event_type = rng.choice(event_types)
             events_data.append(dict(
                 event_type=event_type,
                 title=rng.choice(LECTURE_TITLES),
                 description=rng.choice(DESCRIPTIONS),
-                address=f'https://zoom.us/demo-upcoming-{i:04d}',
-                city=city,
                 date_start=start,
                 date_end=end,
                 status=EventStatus.PLANNED,
@@ -265,14 +257,11 @@ class Command(BaseCommand):
             start = now - timedelta(days=days_ago)
             end = start + timedelta(hours=2)
             volunteer = rng.choice(all_volunteers)
-            city = rng.choice(cities)
             event_type = rng.choice(event_types)
             events_data.append(dict(
                 event_type=event_type,
                 title=rng.choice(LECTURE_TITLES),
                 description=rng.choice(DESCRIPTIONS),
-                address=f'https://meet.example.com/cancelled-{i:04d}',
-                city=city,
                 date_start=start,
                 date_end=end,
                 status=EventStatus.CANCELLED,
@@ -438,7 +427,7 @@ class Command(BaseCommand):
 
     # ─────────────────────────── helpers ─────────────────────────────
 
-    def _bulk_users(self, rng, role, cities, prefix, count, password):
+    def _bulk_users(self, rng, role, prefix, count, password):
         """Создаёт count новых пользователей через bulk_create, пропуская уже существующих."""
         existing = set(User.objects.filter(username__startswith=prefix).values_list('username', flat=True))
         hashed_pw = make_password(password)
@@ -456,12 +445,10 @@ class Command(BaseCommand):
             if username in existing:
                 continue
             first_name, last_name = name_pool[i % len(name_pool)]
-            city = cities[(i - 1) % len(cities)]
             to_create.append(User(
                 username=username,
                 password=hashed_pw,
                 role=role,
-                city=city,
                 first_name=first_name,
                 last_name=last_name,
                 email=f'{username}@example.com',

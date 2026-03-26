@@ -4,7 +4,6 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from apps.users.models import Role, User, VolunteerApplication, VolunteerApplicationStatus, ChatRoom, Message, Complaint, ComplaintStatus
 from apps.events.models import ParticipationStatus, EventStatus
-from apps.geography.models import City
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -13,24 +12,16 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = ['id', 'code', 'title', 'description']
 
 
-class CityShortSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = City
-        fields = ['id', 'title']
-
-
 class UserShortSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
-    city = CityShortSerializer(read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'full_name', 'first_name', 'last_name', 'city', 'contact', 'is_active', 'photo_url', 'avg_rating']
+        fields = ['id', 'username', 'full_name', 'first_name', 'last_name', 'contact', 'is_active', 'photo_url', 'avg_rating']
 
 
 class UserListSerializer(serializers.ModelSerializer):
     role = RoleSerializer(read_only=True)
-    city = CityShortSerializer(read_only=True)
     full_name = serializers.CharField(read_only=True)
     events_total = serializers.IntegerField(read_only=True)
     accepted_events = serializers.IntegerField(read_only=True)
@@ -41,7 +32,7 @@ class UserListSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'first_name', 'last_name', 'full_name', 'contact', 'is_active',
-            'role', 'city', 'events_total', 'accepted_events', 'attended_events', 'completed_events',
+            'role', 'events_total', 'accepted_events', 'attended_events', 'completed_events',
         ]
 
 
@@ -57,7 +48,7 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'password', 'first_name', 'last_name', 'email',
-            'role', 'city', 'contact', 'is_active',
+            'role', 'contact', 'is_active',
         ]
 
     def validate(self, attrs):
@@ -95,7 +86,6 @@ class UserCreateUpdateSerializer(serializers.ModelSerializer):
 class UserStatsSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
     full_name = serializers.CharField()
-    city = serializers.CharField(allow_null=True)
     events_total = serializers.IntegerField()
     accepted_events = serializers.IntegerField()
     attended_events = serializers.IntegerField()
@@ -107,23 +97,20 @@ class UserStatsSerializer(serializers.Serializer):
 
 class MeSerializer(serializers.ModelSerializer):
     role = RoleSerializer(read_only=True)
-    city = CityShortSerializer(read_only=True)
     full_name = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
         fields = [
             'id', 'username', 'first_name', 'last_name', 'full_name', 'email', 'contact',
-            'is_active', 'role', 'city', 'birth_date', 'gender', 'photo_url', 'has_permit', 'avg_rating',
+            'is_active', 'role', 'birth_date', 'gender', 'photo_url', 'has_permit', 'avg_rating',
         ]
 
 
 class MeUpdateSerializer(serializers.ModelSerializer):
-    city = serializers.PrimaryKeyRelatedField(queryset=City.objects.filter(is_active=True), allow_null=True, required=False)
-
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'contact', 'city', 'birth_date', 'gender', 'photo_url']
+        fields = ['first_name', 'last_name', 'email', 'contact', 'birth_date', 'gender', 'photo_url']
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -131,7 +118,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         token['role'] = user.role.code if user.role else None
-        token['city_id'] = user.city_id
         token['has_permit'] = user.has_permit
         return token
 
@@ -143,7 +129,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 def with_user_stats(queryset):
-    return queryset.select_related('role', 'city').annotate(
+    return queryset.select_related('role').annotate(
         events_total=Count('participations', distinct=True),
         accepted_events=Count('participations', filter=Q(participations__status=ParticipationStatus.ACCEPTED), distinct=True),
         attended_events=Count('participations', filter=Q(participations__status=ParticipationStatus.ATTENDED), distinct=True),

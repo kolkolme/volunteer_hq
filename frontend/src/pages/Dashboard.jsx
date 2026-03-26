@@ -522,7 +522,7 @@ const StatsTab = () => {
           <div className="flex-1 h-3 rounded-full bg-white/20 overflow-hidden">
             <div className="h-full rounded-full bg-amber-500 transition-all duration-700" style={{ width: `${Math.min(stats.attendance_rate, 100)}%` }} />
           </div>
-          <span className="text-sm font-bold glass-title w-14 text-right">{stats.attendance_rate}%</span>
+          <span className="text-sm font-bold glass-title w-14 text-right">{Math.min(stats.attendance_rate, 100)}%</span>
         </div>
         <div className="flex justify-between mt-2 text-xs glass-subtitle">
           <span>{stats.attended_events} посещено</span>

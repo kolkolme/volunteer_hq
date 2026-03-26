@@ -129,9 +129,9 @@ const EventsTab = () => {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState({
-    title: '', description: '', address: '', date_start: '', date_end: '',
+    title: '', description: '', date_start: '', date_end: '',
     volunteers_count_min: 1, volunteers_count_max: 5,
-    event_type: '', city: user?.city?.id || '',
+    event_type: '',
   })
   const [eventTypes, setEventTypes] = useState([])
   const [submitError, setSubmitError] = useState('')
@@ -159,7 +159,7 @@ const EventsTab = () => {
       const res = await api.post('/api/v1/events/', { ...form, status: 'planned' })
       setEvents((prev) => [res.data, ...prev])
       setCreating(false)
-      setForm({ title: '', description: '', address: '', date_start: '', date_end: '', volunteers_count_min: 1, volunteers_count_max: 5, event_type: '', city: user?.city?.id || '' })
+      setForm({ title: '', description: '', date_start: '', date_end: '', volunteers_count_min: 1, volunteers_count_max: 5, event_type: '' })
     } catch (e) {
       setSubmitError(JSON.stringify(e.response?.data || 'Ошибка создания'))
     }
@@ -179,7 +179,6 @@ const EventsTab = () => {
           <form className="space-y-3" onSubmit={handleCreate}>
             <GlassInput placeholder="Название" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className="w-full" />
             <GlassInput placeholder="Описание" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full" />
-            <GlassInput placeholder="Адрес" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="w-full" />
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs glass-subtitle mb-1 block">Начало</label>
@@ -223,7 +222,7 @@ const EventsTab = () => {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-medium glass-title">{ev.title}</p>
-                  <p className="text-xs glass-subtitle">{ev.city?.title} · {ev.event_type?.title}</p>
+                  <p className="text-xs glass-subtitle">{ev.event_type?.title}</p>
                   <p className="text-xs glass-subtitle">{new Date(ev.date_start).toLocaleDateString('ru')}</p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${

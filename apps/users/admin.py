@@ -12,11 +12,11 @@ class RoleAdmin(admin.ModelAdmin):
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ['id', 'username', 'first_name', 'last_name', 'role', 'city', 'is_active']
-    list_filter = ['role', 'city', 'is_active', 'is_staff', 'is_superuser']
+    list_display = ['id', 'username', 'first_name', 'last_name', 'role', 'is_active']
+    list_filter = ['role', 'is_active', 'is_staff', 'is_superuser']
     search_fields = ['username', 'first_name', 'last_name', 'email', 'contact']
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('Дополнительно', {'fields': ('role', 'city', 'contact')}),
+        ('Дополнительно', {'fields': ('role', 'contact')}),
     )
 
 

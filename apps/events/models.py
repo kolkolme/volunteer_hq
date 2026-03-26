@@ -36,8 +36,6 @@ class Event(models.Model):
     event_type = models.ForeignKey('events.EventType', on_delete=models.PROTECT, related_name='events')
     title = models.CharField(max_length=255, db_index=True)
     description = models.TextField(blank=True)
-    address = models.CharField(max_length=500)
-    city = models.ForeignKey('geography.City', on_delete=models.PROTECT, related_name='events')
     date_start = models.DateTimeField(db_index=True)
     date_end = models.DateTimeField(db_index=True)
     status = models.CharField(max_length=20, choices=EventStatus.choices, default=EventStatus.PLANNED, db_index=True)
@@ -50,7 +48,6 @@ class Event(models.Model):
     class Meta:
         ordering = ['-date_start', '-id']
         indexes = [
-            models.Index(fields=['city', 'status']),
             models.Index(fields=['event_type', 'status']),
         ]
 

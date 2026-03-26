@@ -102,7 +102,7 @@ class RoleViewSet(viewsets.ModelViewSet):
 
 class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    filterset_fields = ['role', 'city', 'is_active']
+    filterset_fields = ['role', 'is_active']
     search_fields = ['username', 'first_name', 'last_name', 'contact', 'email']
     ordering_fields = ['id', 'date_joined', 'username', 'last_name']
 
@@ -140,18 +140,17 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def stats(self, request, pk=None):
         user = self.get_object()
-        participations = EventParticipation.objects.filter(user=user).select_related('event', 'event__event_type', 'event__city')
+        participations = EventParticipation.objects.filter(user=user).select_related('event', 'event__event_type')
         events_total = participations.count()
         accepted_events = participations.filter(status=ParticipationStatus.ACCEPTED).count()
         attended_events = participations.filter(status=ParticipationStatus.ATTENDED).count()
         lectures_count = participations.filter(status=ParticipationStatus.ATTENDED, event__event_type__code='lecture').count()
         workshops_count = participations.filter(status=ParticipationStatus.ATTENDED, event__event_type__code='workshop').count()
-        attendance_rate = round((attended_events / max(accepted_events, 1)) * 100, 2)
+        attendance_rate = min(round((attended_events / max(accepted_events, 1)) * 100, 2), 100)
         activity_score = attended_events * 10 + lectures_count * 5 + workshops_count * 7
         serializer = UserStatsSerializer({
             'user_id': user.id,
             'full_name': user.full_name,
-            'city': user.city.title if user.city else None,
             'events_total': events_total,
             'accepted_events': accepted_events,
             'attended_events': attended_events,
@@ -172,7 +171,7 @@ class UserViewSet(viewsets.ModelViewSet):
         users = User.objects.filter(
             DQ(first_name__icontains=q) | DQ(last_name__icontains=q) | DQ(username__icontains=q),
             is_active=True,
-        ).exclude(pk=request.user.pk).select_related('city', 'role')[:20]
+        ).exclude(pk=request.user.pk).select_related('role')[:20]
         return Response(UserShortSerializer(users, many=True).data)
 
     @action(detail=True, methods=['get'])
@@ -181,10 +180,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
         queryset = EventParticipation.objects.filter(user_id=pk).select_related(
             'event',
-            'event__city',
             'event__event_type',
             'user',
-            'user__city',
             'user__role',
         )
         status_param = request.query_params.get('status')

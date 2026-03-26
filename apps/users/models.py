@@ -22,7 +22,6 @@ class GenderChoices(models.TextChoices):
 
 class User(AbstractUser):
     role = models.ForeignKey('users.Role', on_delete=models.PROTECT, related_name='users', null=True, blank=True)
-    city = models.ForeignKey('geography.City', on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
     contact = models.CharField(max_length=255, blank=True)
     birth_date = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=GenderChoices.choices, blank=True)
@@ -33,7 +32,6 @@ class User(AbstractUser):
     class Meta:
         indexes = [
             models.Index(fields=['role']),
-            models.Index(fields=['city']),
             models.Index(fields=['is_active']),
         ]
         ordering = ['id']

@@ -49,7 +49,6 @@ const APPEARANCE_OPTIONS = [
 
 const UserDashboard = () => {
   const { user, refreshUser } = useAuth()
-  const [cities, setCities] = useState([])
   const [events, setEvents] = useState([])
   const [pastEvents, setPastEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -61,7 +60,6 @@ const UserDashboard = () => {
     last_name: '',
     email: '',
     contact: '',
-    city: '',
   })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
@@ -97,7 +95,6 @@ const UserDashboard = () => {
       last_name: user.last_name || '',
       email: user.email || '',
       contact: user.contact || '',
-      city: user.city?.id ? String(user.city.id) : '',
     })
   }, [user])
 
@@ -110,10 +107,9 @@ const UserDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [eventsRes, participationsRes, citiesRes, ratingsRes, appRes, tagsRes] = await Promise.all([
+      const [eventsRes, participationsRes, ratingsRes, appRes, tagsRes] = await Promise.all([
         api.get('/api/v1/events/'),
         api.get('/api/v1/my/participations/'),
-        api.get('/api/v1/cities/'),
         api.get('/api/v1/my/ratings/'),
         api.get('/api/v1/volunteer-applications/'),
         api.get('/api/v1/tags/'),
@@ -121,7 +117,6 @@ const UserDashboard = () => {
 
       const allEvents = eventsRes.data.results || eventsRes.data
       const participations = participationsRes.data.results || participationsRes.data
-      const citiesData = citiesRes.data.results || citiesRes.data
       const ratingsData = ratingsRes.data.results || ratingsRes.data
       const applicationsData = appRes.data.results || appRes.data
       const tagsData = tagsRes.data.results || tagsRes.data
@@ -144,7 +139,6 @@ const UserDashboard = () => {
 
       setEvents(upcoming)
       setPastEvents(past)
-      setCities(Array.isArray(citiesData) ? citiesData : [])
       setRatings(ratingsMap)
       setAvailableTags(Array.isArray(tagsData) ? tagsData : [])
       setAppliedEventIds(new Set(participations.map(p => p.event?.id ?? p.event)))
@@ -195,8 +189,7 @@ const UserDashboard = () => {
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
       const matchesSearch = !searchQuery ||
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        event.address?.toLowerCase().includes(searchQuery.toLowerCase())
+        event.title.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesTags = selectedTags.length === 0 ||
         selectedTags.some(tagId => event.tags?.some(t => t.id === tagId))
       return matchesSearch && matchesTags
@@ -224,7 +217,6 @@ const UserDashboard = () => {
         last_name: profileForm.last_name,
         email: profileForm.email,
         contact: profileForm.contact,
-        city: profileForm.city || null,
       }
       await api.patch('/api/v1/auth/me/', payload)
       await refreshUser()
@@ -425,30 +417,10 @@ const UserDashboard = () => {
                       <GlassInput name="contact" value={profileForm.contact} onChange={handleProfileChange} />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium glass-subtitle mb-2">Город</label>
-                    <select
-                      name="city"
-                      value={profileForm.city}
-                      onChange={handleProfileChange}
-                      className="glass-input border rounded-2xl p-3"
-                    >
-                      <option value="">Не указан</option>
-                      {cities.map((city) => (
-                        <option key={city.id} value={city.id}>
-                          {city.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-2 glass-card rounded-2xl p-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="glass-card rounded-2xl p-4">
                       <p className="text-sm opacity-60 mb-1">Логин</p>
                       <p className="font-semibold">{user?.username}</p>
-                    </div>
-                    <div className="glass-card rounded-2xl p-4">
-                      <p className="text-sm opacity-60 mb-1">Город</p>
-                      <p className="font-semibold">{user?.city?.title || 'Не указан'}</p>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3 items-center">

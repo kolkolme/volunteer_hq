@@ -70,7 +70,6 @@ const RatingLeaderboard = ({ currentUser }) => {
               <tr className="border-b border-white/10">
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase opacity-60 w-12">#</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase opacity-60">Волонтёр</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase opacity-60 hidden sm:table-cell">Город</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold uppercase opacity-60">Рейтинг</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold uppercase opacity-60 hidden md:table-cell">Лекций</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold uppercase opacity-60 hidden md:table-cell">Сумма ⭐</th>
@@ -91,7 +90,6 @@ const RatingLeaderboard = ({ currentUser }) => {
                   <td className="px-4 py-3">
                     <p className="font-semibold">{row.full_name}</p>
                   </td>
-                  <td className="px-4 py-3 text-sm opacity-60 hidden sm:table-cell">{row.city || '—'}</td>
                   <td className="px-4 py-3 text-right">
                     <span className={`text-lg font-bold ${row.rank === 1 ? 'text-amber-400' : row.rank === 2 ? 'text-gray-400' : row.rank === 3 ? 'text-amber-600' : ''}`}>
                       {row.avg_rating.toFixed(2)}

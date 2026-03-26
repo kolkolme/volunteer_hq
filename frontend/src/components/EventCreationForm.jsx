@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
-import { Calendar, MapPin, Users, Zap, CheckCircle, AlertCircle } from 'lucide-react'
+import { Calendar, Users, Zap, CheckCircle, AlertCircle } from 'lucide-react'
 
 const EventCreationForm = ({ onEventCreated }) => {
   const navigate = useNavigate()
-  const [cities, setCities] = useState([])
   const [eventTypes, setEventTypes] = useState([])
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,8 +14,6 @@ const EventCreationForm = ({ onEventCreated }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    address: '',
-    city: '',
     event_type: '',
     date_start: '',
     date_end: '',
@@ -26,19 +23,8 @@ const EventCreationForm = ({ onEventCreated }) => {
   })
 
   useEffect(() => {
-    fetchCities()
     fetchEventTypes()
   }, [])
-
-  const fetchCities = async () => {
-    try {
-      const response = await api.get('/api/v1/cities/')
-      const data = response.data.results || response.data
-      setCities(Array.isArray(data) ? data : [])
-    } catch (error) {
-      console.error('Failed to fetch cities:', error)
-    }
-  }
 
   const fetchEventTypes = async () => {
     try {
@@ -71,8 +57,6 @@ const EventCreationForm = ({ onEventCreated }) => {
       setFormData({
         title: '',
         description: '',
-        address: '',
-        city: '',
         event_type: '',
         date_start: '',
         date_end: '',
@@ -89,7 +73,7 @@ const EventCreationForm = ({ onEventCreated }) => {
     }
   }
 
-  const isStep1Valid = formData.title && formData.city && formData.event_type && formData.address
+  const isStep1Valid = formData.title && formData.event_type
   const isStep2Valid = formData.date_start && formData.date_end && formData.volunteers_count_min && formData.volunteers_count_max
 
   return (
@@ -144,59 +128,23 @@ const EventCreationForm = ({ onEventCreated }) => {
               />
             </div>
 
-            {/* City & Event Type */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-semibold mb-2 block">Город *</label>
-                <select
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="glass-input w-full rounded-2xl px-4 py-3 border border-white border-opacity-30 backdrop-blur-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-all"
-                  required
-                >
-                  <option value="">Выберите город</option>
-                  {cities.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-semibold mb-2 block">Тип мероприятия *</label>
-                <select
-                  name="event_type"
-                  value={formData.event_type}
-                  onChange={handleChange}
-                  className="glass-input w-full rounded-2xl px-4 py-3 border border-white border-opacity-30 backdrop-blur-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-all"
-                  required
-                >
-                  <option value="">Выберите тип</option>
-                  {eventTypes.map((et) => (
-                    <option key={et.id} value={et.id}>
-                      {et.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Address */}
+            {/* Event Type */}
             <div>
-              <label className="text-sm font-semibold mb-2 block flex items-center gap-2">
-                <MapPin className="h-4 w-4" />
-                Адрес *
-              </label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
+              <label className="text-sm font-semibold mb-2 block">Тип мероприятия *</label>
+              <select
+                name="event_type"
+                value={formData.event_type}
                 onChange={handleChange}
-                placeholder="Например: ул. Ленина, 10"
                 className="glass-input w-full rounded-2xl px-4 py-3 border border-white border-opacity-30 backdrop-blur-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition-all"
                 required
-              />
+              >
+                <option value="">Выберите тип</option>
+                {eventTypes.map((et) => (
+                  <option key={et.id} value={et.id}>
+                    {et.title}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Description */}

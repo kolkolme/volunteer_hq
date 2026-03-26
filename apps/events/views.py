@@ -39,8 +39,8 @@ class EventTypeViewSet(viewsets.ModelViewSet):
 
 class EventViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    filterset_fields = ['city', 'event_type', 'status']
-    search_fields = ['title', 'description', 'address']
+    filterset_fields = ['event_type', 'status']
+    search_fields = ['title', 'description']
     ordering_fields = ['id', 'date_start', 'date_end', 'created_at']
 
     def get_queryset(self):
@@ -82,7 +82,7 @@ class EventViewSet(viewsets.ModelViewSet):
         event = self.get_object()
         if request.method == 'GET':
             serializer = EventParticipationSerializer(
-                event.participations.select_related('event', 'user', 'user__city', 'user__role'),
+                event.participations.select_related('event', 'user', 'user__role'),
                 many=True,
             )
             return Response(serializer.data)
@@ -108,7 +108,6 @@ class EventViewSet(viewsets.ModelViewSet):
         allowed_volunteers = User.objects.filter(
             id__in=volunteer_ids,
             role__code='volunteer',
-            city_id=event.city_id,
             is_active=True,
         )
 
@@ -244,7 +243,7 @@ class MyStatsView(APIView):
         attended_events = qs.filter(status=ParticipationStatus.ATTENDED).count()
         declined_events = qs.filter(status=ParticipationStatus.DECLINED).count()
         absent_events = qs.filter(status=ParticipationStatus.ABSENT).count()
-        attendance_rate = round((attended_events / max(accepted_events, 1)) * 100, 2)
+        attendance_rate = min(round((attended_events / max(accepted_events, 1)) * 100, 2), 100)
         activity_score = attended_events * 10 - absent_events * 3
         serializer = MyStatsSerializer({
             'events_total': events_total,

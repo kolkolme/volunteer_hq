@@ -16,16 +16,16 @@ class EventParticipationInline(admin.TabularInline):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ['id', 'title', 'event_type', 'city', 'date_start', 'status']
-    search_fields = ['title', 'address']
-    list_filter = ['status', 'event_type', 'city']
+    list_display = ['id', 'title', 'event_type', 'date_start', 'status']
+    search_fields = ['title']
+    list_filter = ['status', 'event_type']
     inlines = [EventParticipationInline]
 
 
 @admin.register(EventParticipation)
 class EventParticipationAdmin(admin.ModelAdmin):
     list_display = ['id', 'event', 'user', 'status', 'accepted_at', 'responded_at']
-    list_filter = ['status', 'event__city']
+    list_filter = ['status']
     search_fields = ['event__title', 'user__username', 'user__first_name', 'user__last_name']
 
 

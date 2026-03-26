@@ -169,7 +169,6 @@ const ChatWidget = ({ user, color = 'blue', height = 'h-[480px]' }) => {
                     className="w-full text-left px-3 py-2 rounded-xl glass-card hover:opacity-80 transition-all"
                   >
                     <p className="text-sm font-medium truncate">{u.full_name || u.username}</p>
-                    {u.city && <p className="text-xs opacity-50 truncate">{u.city.title}</p>}
                   </button>
                 ))}
               </div>

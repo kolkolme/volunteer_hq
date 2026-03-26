@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from apps.events.models import EventType, Event, EventParticipation, LectureRating, ParticipationStatus, EventStatus, Tag, LectureMaterial
 from apps.users.models import User
-from apps.users.serializers import CityShortSerializer, UserShortSerializer
+from apps.users.serializers import UserShortSerializer
 
 
 class EventTypeSerializer(serializers.ModelSerializer):
@@ -15,7 +15,6 @@ class EventTypeSerializer(serializers.ModelSerializer):
 
 class EventListSerializer(serializers.ModelSerializer):
     event_type = EventTypeSerializer(read_only=True)
-    city = CityShortSerializer(read_only=True)
     created_by = UserShortSerializer(read_only=True)
     assigned_count = serializers.IntegerField(read_only=True)
     accepted_count = serializers.IntegerField(read_only=True)
@@ -31,7 +30,7 @@ class EventListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = [
-            'id', 'event_type', 'title', 'description', 'address', 'city', 'date_start', 'date_end', 'status',
+            'id', 'event_type', 'title', 'description', 'date_start', 'date_end', 'status',
             'volunteers_count_min', 'volunteers_count_max', 'created_by', 'created_at', 'updated_at',
             'assigned_count', 'accepted_count', 'attended_count', 'free_slots', 'tags',
         ]
@@ -45,7 +44,7 @@ class EventCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = [
-            'id', 'event_type', 'title', 'description', 'address', 'date_start', 'date_end', 'status',
+            'id', 'event_type', 'title', 'description', 'date_start', 'date_end', 'status',
             'volunteers_count_min', 'volunteers_count_max', 'tag_ids',
         ]
 
@@ -73,9 +72,6 @@ class EventCreateUpdateSerializer(serializers.ModelSerializer):
         tag_ids = validated_data.pop('tag_ids', [])
         user = self.context['request'].user
         validated_data['created_by'] = user
-        # auto-assign city from the creator's profile
-        if 'city' not in validated_data and user.city_id:
-            validated_data['city_id'] = user.city_id
         event = super().create(validated_data)
         if tag_ids:
             from apps.events.models import EventTag
@@ -101,8 +97,8 @@ class EventCreateUpdateSerializer(serializers.ModelSerializer):
 class EventParticipationSerializer(serializers.ModelSerializer):
     user = UserShortSerializer(read_only=True)
     event = serializers.PrimaryKeyRelatedField(read_only=True)
-    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.select_related('role', 'city').all(), write_only=True, source='user', required=False)
-    event_id = serializers.PrimaryKeyRelatedField(queryset=Event.objects.select_related('city').all(), write_only=True, source='event', required=False)
+    user_id = serializers.PrimaryKeyRelatedField(queryset=User.objects.select_related('role').all(), write_only=True, source='user', required=False)
+    event_id = serializers.PrimaryKeyRelatedField(queryset=Event.objects.all(), write_only=True, source='event', required=False)
 
     class Meta:
         model = EventParticipation
@@ -214,7 +210,7 @@ class MyParticipationDecisionSerializer(serializers.Serializer):
 
 
 def with_event_stats(queryset):
-    return queryset.select_related('event_type', 'city', 'created_by', 'created_by__city').annotate(
+    return queryset.select_related('event_type', 'created_by').annotate(
         assigned_count=Count('participations', distinct=True),
         accepted_count=Count('participations', filter=Q(participations__status=ParticipationStatus.ACCEPTED), distinct=True),
         attended_count=Count('participations', filter=Q(participations__status=ParticipationStatus.ATTENDED), distinct=True),
@@ -227,7 +223,7 @@ def with_event_stats(queryset):
             ]),
             distinct=True,
         ),
-    ).prefetch_related('participations', 'participations__user', 'participations__user__city')
+    ).prefetch_related('participations', 'participations__user')
 
 
 class LectureRatingSerializer(serializers.ModelSerializer):

@@ -6,7 +6,6 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.events.models import Event, EventParticipation, EventStatus, EventType, ParticipationStatus, Tag, TagType
-from apps.geography.models import City
 from apps.users.models import Role, User
 
 
@@ -84,17 +83,11 @@ class Command(BaseCommand):
 
         role_objects = self._sync_roles()
 
-        city_titles = ['Москва', 'Санкт-Петербург', 'Казань', 'Екатеринбург', 'Новосибирск']
-        city_objects = {}
-        for title in city_titles:
-            city_objects[title], _ = City.objects.get_or_create(title=title)
-
         # Суперпользователь
         admin, created = User.objects.get_or_create(
             username='admin',
             defaults={
                 'role': role_objects['superuser'],
-                'city': city_objects['Москва'],
                 'first_name': 'Системный',
                 'last_name': 'Администратор',
                 'email': 'admin@example.com',
@@ -118,7 +111,6 @@ class Command(BaseCommand):
             username='manager',
             defaults={
                 'role': role_objects['admin'],
-                'city': city_objects['Москва'],
                 'first_name': 'Главный',
                 'last_name': 'Менеджер',
                 'email': 'manager@example.com',
@@ -135,38 +127,11 @@ class Command(BaseCommand):
             admin_user.set_password('manager123')
             admin_user.save(update_fields=['password'])
 
-        # Администраторы по городам
-        city_admins = []
-        for index, (city_title, city) in enumerate(city_objects.items(), start=1):
-            username = f'admin{index}'
-            user, created = User.objects.get_or_create(
-                username=username,
-                defaults={
-                    'role': role_objects['admin'],
-                    'city': city,
-                    'first_name': 'Админ',
-                    'last_name': city_title,
-                    'email': f'{username}@example.com',
-                    'contact': f'@{username}',
-                    'is_staff': True,
-                    'is_active': True,
-                },
-            )
-            user.role = role_objects['admin']
-            user.is_staff = True
-            user.is_active = True
-            user.save(update_fields=['role', 'is_staff', 'is_active'])
-            if created or not user.check_password('admin12345'):
-                user.set_password('admin12345')
-                user.save(update_fields=['password'])
-            city_admins.append(user)
-
         # Координатор-демо
         coord_user, created = User.objects.get_or_create(
             username='coord1',
             defaults={
                 'role': role_objects['coordinator'],
-                'city': city_objects['Москва'],
                 'first_name': 'Координатор',
                 'last_name': 'Демо',
                 'email': 'coord1@example.com',
@@ -192,13 +157,11 @@ class Command(BaseCommand):
         ]
         volunteers = []
         for index, (first_name, last_name) in enumerate(volunteer_names, start=1):
-            city = list(city_objects.values())[(index - 1) % len(city_objects)]
             username = f'volunteer{index}'
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
                     'role': role_objects['volunteer'],
-                    'city': city,
                     'first_name': first_name,
                     'last_name': last_name,
                     'email': f'{username}@example.com',
@@ -207,9 +170,8 @@ class Command(BaseCommand):
                 },
             )
             user.role = role_objects['volunteer']
-            user.city = city
             user.is_active = True
-            user.save(update_fields=['role', 'city', 'is_active'])
+            user.save(update_fields=['role', 'is_active'])
             if created or not user.check_password('vol123456'):
                 user.set_password('vol123456')
                 user.save(update_fields=['password'])
@@ -224,13 +186,11 @@ class Command(BaseCommand):
         ]
         visitors = []
         for index, (first_name, last_name) in enumerate(visitor_names, start=1):
-            city = list(city_objects.values())[(index - 1) % len(city_objects)]
             username = f'user{index}'
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
                     'role': role_objects['user'],
-                    'city': city,
                     'first_name': first_name,
                     'last_name': last_name,
                     'email': f'{username}@example.com',
@@ -239,9 +199,8 @@ class Command(BaseCommand):
                 },
             )
             user.role = role_objects['user']
-            user.city = city
             user.is_active = True
-            user.save(update_fields=['role', 'city', 'is_active'])
+            user.save(update_fields=['role', 'is_active'])
             if created or not user.check_password('user12345'):
                 user.set_password('user12345')
                 user.save(update_fields=['password'])
@@ -262,42 +221,34 @@ class Command(BaseCommand):
         now = timezone.now()
         statuses = [EventStatus.PLANNED, EventStatus.PLANNED, EventStatus.COMPLETED, EventStatus.COMPLETED, EventStatus.CANCELLED]
         created_events = []
-        for city_index, city in enumerate(city_objects.values(), start=1):
-            city_admin = city_admins[city_index - 1]
-            for event_index in range(1, 5):
-                event_type = list(event_type_objects.values())[(event_index - 1) % len(event_type_objects)]
-                start = now + timedelta(days=(city_index * 2 + event_index - 6), hours=event_index)
-                end = start + timedelta(hours=2)
-                status_value = statuses[(city_index + event_index - 2) % len(statuses)]
-                event, _ = Event.objects.get_or_create(
-                    title=f'{event_type.title} #{city_index}-{event_index}',
-                    city=city,
-                    defaults={
-                        'event_type': event_type,
-                        'description': f'{event_type.title} для города {city.title}',
-                        'address': f'{city.title}, Центральная улица, д. {event_index}',
-                        'date_start': start,
-                        'date_end': end,
-                        'status': status_value,
-                        'volunteers_count_min': 2,
-                        'volunteers_count_max': 5,
-                        'created_by': city_admin,
-                    },
-                )
-                created_events.append(event)
-
-        city_to_volunteers = {}
-        for volunteer in volunteers:
-            city_to_volunteers.setdefault(volunteer.city_id, []).append(volunteer)
+        for event_index in range(1, 21):
+            event_type = list(event_type_objects.values())[(event_index - 1) % len(event_type_objects)]
+            start = now + timedelta(days=(event_index - 10), hours=((event_index * 3) % 8 + 9))
+            end = start + timedelta(hours=2)
+            status_value = statuses[(event_index - 1) % len(statuses)]
+            event, _ = Event.objects.get_or_create(
+                title=f'{event_type.title} #{event_index}',
+                defaults={
+                    'event_type': event_type,
+                    'description': f'Тестовое {event_type.title.lower()} #{event_index}',
+                    'date_start': start,
+                    'date_end': end,
+                    'status': status_value,
+                    'volunteers_count_min': 2,
+                    'volunteers_count_max': 5,
+                    'created_by': admin_user,
+                },
+            )
+            created_events.append(event)
 
         rng = random.Random(42)
         status_pool_active = [ParticipationStatus.PENDING, ParticipationStatus.ACCEPTED, ParticipationStatus.DECLINED]
         status_pool_completed = [ParticipationStatus.ATTENDED, ParticipationStatus.ABSENT, ParticipationStatus.ATTENDED]
 
         for event in created_events:
-            available = city_to_volunteers.get(event.city_id, [])[:]
-            rng.shuffle(available)
-            for volunteer in available[: rng.randint(2, min(5, len(available)) or 1)]:
+            shuffled = volunteers[:]
+            rng.shuffle(shuffled)
+            for volunteer in shuffled[:rng.randint(2, min(5, len(shuffled)))]:
                 if event.status == EventStatus.COMPLETED:
                     participation_status = rng.choice(status_pool_completed)
                 elif event.status == EventStatus.CANCELLED:
@@ -342,7 +293,6 @@ class Command(BaseCommand):
         self.stdout.write('Users:')
         self.stdout.write('  admin / admin12345      (superuser)')
         self.stdout.write('  manager / manager123    (admin)')
-        self.stdout.write('  admin1 / admin12345     (admin, city)')
         self.stdout.write('  coord1 / coord123456    (coordinator, has_permit)')
         self.stdout.write('  volunteer1 / vol123456  (volunteer)')
         self.stdout.write('  user1 / user12345       (user/visitor)')
