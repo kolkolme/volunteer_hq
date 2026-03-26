@@ -261,7 +261,7 @@ const Register = () => {
               <GlassInput
                 id="photo_url"
                 name="photo_url"
-                type="url"
+                type="text"
                 placeholder="https://example.com/photo.jpg"
                 className="w-full"
                 value={formData.photo_url}
