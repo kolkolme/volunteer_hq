@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # start.sh - полный setup + запуск Volunteer HQ с абсолютного нуля
 # Использование: chmod +x start.sh && ./start.sh
+#   или: sudo bash start.sh
+
+# Если запущен через sh/dash — перезапустить через bash
+if [ -z "${BASH_VERSION:-}" ]; then
+  exec bash "$0" "$@"
+fi
+
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -44,12 +51,12 @@ install_python() {
       brew install python@3.12
       ;;
     debian)
-      sudo apt-get update -qq
-      sudo apt-get install -y python3 python3-pip python3-venv python3-full
+      apt-get update -qq
+      apt-get install -y python3 python3-pip python3-venv python3-full
       ;;
-    arch)    sudo pacman -Sy --noconfirm python python-pip ;;
-    fedora)  sudo dnf install -y python3 python3-pip ;;
-    rhel)    sudo yum install -y python3 python3-pip ;;
+    arch)    pacman -Sy --noconfirm python python-pip ;;
+    fedora)  dnf install -y python3 python3-pip ;;
+    rhel)    yum install -y python3 python3-pip ;;
     *)       error "Установите Python 3.10+ вручную." ;;
   esac
 }
@@ -61,13 +68,13 @@ install_node() {
       brew install node
       ;;
     debian)
-      sudo apt-get install -y curl ca-certificates
-      curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-      sudo apt-get install -y nodejs
+      apt-get install -y curl ca-certificates
+      curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+      apt-get install -y nodejs
       ;;
-    arch)    sudo pacman -Sy --noconfirm nodejs npm ;;
-    fedora)  sudo dnf install -y nodejs npm ;;
-    rhel)    sudo yum install -y nodejs npm ;;
+    arch)    pacman -Sy --noconfirm nodejs npm ;;
+    fedora)  dnf install -y nodejs npm ;;
+    rhel)    yum install -y nodejs npm ;;
     *)       error "Установите Node.js 18+ вручную: https://nodejs.org" ;;
   esac
 }
@@ -95,9 +102,12 @@ if [ "$OS" = "debian" ]; then
   PY_MINOR=$(python3 -c "import sys; print(sys.version_info.minor)")
   PY_MAJOR=$(python3 -c "import sys; print(sys.version_info.major)")
   VENV_PKG="python${PY_MAJOR}.${PY_MINOR}-venv"
-  info "Установка $VENV_PKG и python3-venv..."
-  sudo apt-get install -y "$VENV_PKG" python3-venv 2>/dev/null \
-    || sudo apt-get install -y python3-venv || true
+  info "Обновление списка пакетов..."
+  apt-get update -qq
+  info "Установка $VENV_PKG..."
+  apt-get install -y "$VENV_PKG" || apt-get install -y python3-venv || \
+    error "Не удалось установить $VENV_PKG. Запустите вручную: apt-get install $VENV_PKG"
+  info "$VENV_PKG установлен"
 fi
 
 # --- pip ---
@@ -105,10 +115,10 @@ step "Проверка pip..."
 if ! python3 -m pip --version &>/dev/null; then
   warn "pip не найден — устанавливаем..."
   case "$OS" in
-    debian)  sudo apt-get install -y python3-pip ;;
-    arch)    sudo pacman -Sy --noconfirm python-pip ;;
-    fedora)  sudo dnf install -y python3-pip ;;
-    rhel)    sudo yum install -y python3-pip ;;
+    debian)  apt-get install -y python3-pip ;;
+    arch)    pacman -Sy --noconfirm python-pip ;;
+    fedora)  dnf install -y python3-pip ;;
+    rhel)    yum install -y python3-pip ;;
     *)       curl -sS https://bootstrap.pypa.io/get-pip.py | python3 ;;
   esac
 else
