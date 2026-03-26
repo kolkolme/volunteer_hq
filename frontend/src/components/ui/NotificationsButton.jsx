@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell, X, Trash2 } from 'lucide-react'
 
 export default function NotificationsButton() {
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
+  const buttonRef = useRef(null)
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -53,6 +54,7 @@ export default function NotificationsButton() {
     <>
       {/* Button */}
       <button
+        ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
         className="btn-ios p-3 relative transition-all duration-200"
         title="Уведомления"
@@ -75,8 +77,17 @@ export default function NotificationsButton() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="fixed top-20 right-4 w-80 max-h-96 rounded-2xl overflow-hidden flex flex-col z-9999 pointer-events-auto border divide-y" style={{ background: 'var(--card-bg)', borderColor: 'var(--border-primary)' }}>
-          {/* Header */}
+        <div
+          className="fixed w-80 max-h-96 rounded-2xl overflow-hidden flex flex-col z-9999 pointer-events-auto border divide-y"
+          style={{
+            background: 'var(--card-bg)',
+            borderColor: 'var(--border-primary)',
+            top: buttonRef.current
+              ? buttonRef.current.getBoundingClientRect().bottom + 8
+              : 80,
+            right: 16,
+          }}
+        >          {/* Header */}
           <div className="flex items-center justify-between px-5 py-3">
             <h3 className="text-sm font-semibold">Уведомления</h3>
             <button

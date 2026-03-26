@@ -9,20 +9,23 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.events.models import Event, EventParticipation, EventType, EventStatus, ParticipationStatus
+from apps.events.models import Event, EventParticipation, EventType, EventStatus, LectureRating, ParticipationStatus, Tag, LectureMaterial
 from apps.events.serializers import (
     EventTypeSerializer,
     EventListSerializer,
     EventDetailSerializer,
     EventCreateUpdateSerializer,
     EventParticipationSerializer,
+    LectureRatingSerializer,
     MyStatsSerializer,
     EventCompleteSerializer,
     MyParticipationDecisionSerializer,
+    TagSerializer,
+    LectureMaterialSerializer,
     with_event_stats,
 )
 from apps.users.models import User
-from apps.users.permissions import IsAdminOrReadOnly, IsCoordinatorOrAbove
+from apps.users.permissions import IsAdminOrReadOnly, IsAdminOrAbove, IsCoordinatorOrAbove
 
 
 class EventTypeViewSet(viewsets.ModelViewSet):
@@ -42,10 +45,13 @@ class EventViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = with_event_stats(Event.objects.all())
         user = self.request.user
-        if user.role.code == 'city_coordinator':
-            queryset = queryset.filter(city=user.city)
-        elif user.role.code == 'volunteer':
-            queryset = queryset.filter(participations__user=user).distinct()
+        if user.role.code == 'volunteer':
+            # show events the volunteer participates in OR created themselves
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(participations__user=user) | Q(created_by=user)
+            ).distinct()
+        # 'user' role sees all events (they are visitors, not volunteers)
         date_from = self.request.query_params.get('date_from')
         date_to = self.request.query_params.get('date_to')
         if date_from:
@@ -66,7 +72,9 @@ class EventViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in {'list', 'retrieve'}:
             return [IsAuthenticated()]
-        return [IsCoordinatorOrAbove()]
+        if self.action == 'create':
+            return [IsAuthenticated()]  # volunteers (students) can create lectures
+        return [IsAdminOrAbove()]
 
     @action(detail=True, methods=['get', 'post'])
     def participants(self, request, pk=None):
@@ -89,8 +97,8 @@ class EventViewSet(viewsets.ModelViewSet):
         event = self.get_object()
         current_user = request.user
 
-        if current_user.role.code == 'city_coordinator' and event.city_id != current_user.city_id:
-            raise PermissionDenied('Городской координатор может назначать волонтеров только в своём городе.')
+        if current_user.role.code not in {'superuser', 'admin'}:
+            raise PermissionDenied('Только администратор может назначать волонтёров.')
 
         volunteer_ids = request.data.get('volunteer_ids', [])
         if not isinstance(volunteer_ids, list):
@@ -176,9 +184,7 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = EventParticipation.objects.select_related('event', 'event__city', 'user', 'user__city', 'user__role')
         user = self.request.user
-        if user.role.code == 'city_coordinator':
-            queryset = queryset.filter(event__city=user.city)
-        elif user.role.code == 'volunteer':
+        if user.role.code in {'volunteer', 'user'}:
             queryset = queryset.filter(user=user)
         date_from = self.request.query_params.get('date_from')
         date_to = self.request.query_params.get('date_to')
@@ -191,7 +197,9 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in {'list', 'retrieve'}:
             return [IsAuthenticated()]
-        return [IsCoordinatorOrAbove()]
+        if self.action == 'create':
+            return [IsAuthenticated()]  # users can apply for lectures
+        return [IsAdminOrAbove()]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -203,16 +211,26 @@ class MyEventsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        queryset = EventParticipation.objects.filter(user=request.user).select_related(
-            'event',
-            'event__city',
-            'event__event_type',
-            'user',
-            'user__city',
-            'user__role',
+        # Events the user participates in
+        participations = EventParticipation.objects.filter(user=request.user).select_related(
+            'event', 'event__city', 'event__event_type',
+            'user', 'user__city', 'user__role',
         )
-        serializer = EventParticipationSerializer(queryset, many=True)
-        return Response(serializer.data)
+        # Events created by the user (self-created lectures) that may not have a participation
+        participated_event_ids = participations.values_list('event_id', flat=True)
+        created_events = Event.objects.filter(
+            created_by=request.user
+        ).exclude(
+            id__in=participated_event_ids
+        ).select_related('city', 'event_type')
+
+        participation_data = EventParticipationSerializer(participations, many=True).data
+        created_data = EventListSerializer(created_events, many=True, context={'request': request}).data
+
+        return Response({
+            'participations': participation_data,
+            'created': created_data,
+        })
 
 
 class MyStatsView(APIView):
@@ -280,18 +298,6 @@ def my_participation_decline(request, pk):
     return Response({'detail': 'Участие отклонено.'})
 
 
-class MyEventsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        participations = EventParticipation.objects.filter(
-            user=request.user
-        ).select_related('event', 'event__city', 'event__event_type').order_by('-event__date_start')
-
-        serializer = EventParticipationSerializer(participations, many=True)
-        return Response(serializer.data)
-
-
 class MyParticipationsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -304,24 +310,69 @@ class MyParticipationsView(APIView):
         return Response(serializer.data)
 
 
-class MyStatsView(APIView):
+class LectureRatingViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
-    def get(self, request):
-        participations = EventParticipation.objects.filter(user=request.user).select_related('event', 'event__event_type')
+    def get_queryset(self):
+        user = self.request.user
+        qs = LectureRating.objects.select_related('event', 'user', 'user__city').all()
+        if user.role.code in {'volunteer', 'user'}:
+            return qs.filter(user=user)
+        return qs
 
-        total_events = participations.count()
-        accepted_events = participations.filter(status=ParticipationStatus.ACCEPTED).count()
-        attended_events = participations.filter(status=ParticipationStatus.ATTENDED).count()
-        lectures_count = participations.filter(status=ParticipationStatus.ATTENDED, event__event_type__code='lecture').count()
-        workshops_count = participations.filter(status=ParticipationStatus.ATTENDED, event__event_type__code='workshop').count()
-        attendance_rate = round((attended_events / max(accepted_events, 1)) * 100, 2)
+    def get_serializer_class(self):
+        return LectureRatingSerializer
 
-        return Response({
-            'total_events': total_events,
-            'accepted_events': accepted_events,
-            'attended_events': attended_events,
-            'lectures_count': lectures_count,
-            'workshops_count': workshops_count,
-            'attendance_rate': attendance_rate,
-        })
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.user != request.user and request.user.role.code not in {'admin', 'superuser'}:
+            return Response({'detail': 'Нельзя редактировать чужую оценку.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.user != request.user and request.user.role.code not in {'admin', 'superuser'}:
+            return Response({'detail': 'Нельзя удалять чужую оценку.'}, status=status.HTTP_403_FORBIDDEN)
+        return super().destroy(request, *args, **kwargs)
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filterset_fields = ['tag_type']
+    search_fields = ['code', 'title']
+    ordering_fields = ['id', 'tag_type', 'title']
+
+
+class LectureMaterialViewSet(viewsets.ModelViewSet):
+    serializer_class = LectureMaterialSerializer
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['event', 'material_type']
+    ordering_fields = ['id', 'created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = LectureMaterial.objects.select_related('event', 'uploaded_by').all()
+        if user.role and user.role.code in {'volunteer', 'user'}:
+            qs = qs.filter(event__participations__user=user).distinct()
+        return qs
+
+    def get_permissions(self):
+        if self.action in {'list', 'retrieve'}:
+            return [IsAuthenticated()]
+        return [IsCoordinatorOrAbove()]
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx['request'] = self.request
+        return ctx

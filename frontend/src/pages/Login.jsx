@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import GlassCard from '../components/ui/GlassCard'
@@ -15,13 +15,6 @@ const Login = () => {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    // Clear any invalid tokens on login page
-    console.log('Login page mount')
-    const token = localStorage.getItem('token')
-    console.log('Token in localStorage:', !!token)
-  }, [])
-
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -30,12 +23,9 @@ const Login = () => {
   }
 
   const handleSubmit = async (e) => {
-    console.log('handleSubmit called with event:', e)
     e.preventDefault()
-    console.log('Form data:', formData)
     
     if (!formData.username || !formData.password) {
-      console.error('Username or password is empty')
       setError('Заполните оба поля')
       return
     }
@@ -43,15 +33,11 @@ const Login = () => {
     setLoading(true)
     setError('')
 
-    console.log('Calling login with:', { username: formData.username, password: '***' })
     const result = await login(formData.username, formData.password)
-    console.log('Login result:', result)
 
     if (result.success) {
-      console.log('Login successful, navigating to /')
       navigate('/')
     } else {
-      console.log('Login failed:', result.error)
       setError(result.error)
     }
 
@@ -67,9 +53,6 @@ const Login = () => {
           </h2>
           <p className="glass-subtitle mt-2">
             Volunteer HQ
-          </p>
-          <p className="text-xs glass-subtitle mt-4 p-2 bg-blue-100 rounded">
-            Тест: Откройте DevTools (F12) → Console для логов
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -121,16 +104,12 @@ const Login = () => {
           </div>
 
           <div className="text-center">
-            <button
-              type="button"
-              onClick={() => {
-                localStorage.clear()
-                window.location.reload()
-              }}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              Очистить кэш и перезагрузить
-            </button>
+            <p className="text-sm glass-subtitle">
+              Нет аккаунта?{' '}
+              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                Зарегистрироваться
+              </Link>
+            </p>
           </div>
         </form>
       </GlassCard>

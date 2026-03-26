@@ -2,7 +2,7 @@ from django.db.models import Count, F, Q
 from django.utils import timezone
 from rest_framework import serializers
 
-from apps.events.models import EventType, Event, EventParticipation, ParticipationStatus, EventStatus
+from apps.events.models import EventType, Event, EventParticipation, LectureRating, ParticipationStatus, EventStatus, Tag, LectureMaterial
 from apps.users.models import User
 from apps.users.serializers import CityShortSerializer, UserShortSerializer
 
@@ -21,22 +21,32 @@ class EventListSerializer(serializers.ModelSerializer):
     accepted_count = serializers.IntegerField(read_only=True)
     attended_count = serializers.IntegerField(read_only=True)
     free_slots = serializers.IntegerField(read_only=True)
+    tags = serializers.SerializerMethodField()
+
+    def get_tags(self, obj):
+        from apps.events.models import Tag
+        tag_qs = Tag.objects.filter(event_tags__event=obj)
+        return TagSerializer(tag_qs, many=True).data
 
     class Meta:
         model = Event
         fields = [
             'id', 'event_type', 'title', 'description', 'address', 'city', 'date_start', 'date_end', 'status',
             'volunteers_count_min', 'volunteers_count_max', 'created_by', 'created_at', 'updated_at',
-            'assigned_count', 'accepted_count', 'attended_count', 'free_slots',
+            'assigned_count', 'accepted_count', 'attended_count', 'free_slots', 'tags',
         ]
 
 
 class EventCreateUpdateSerializer(serializers.ModelSerializer):
+    tag_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(), many=True, write_only=True, required=False
+    )
+
     class Meta:
         model = Event
         fields = [
-            'id', 'event_type', 'title', 'description', 'address', 'city', 'date_start', 'date_end', 'status',
-            'volunteers_count_min', 'volunteers_count_max',
+            'id', 'event_type', 'title', 'description', 'address', 'date_start', 'date_end', 'status',
+            'volunteers_count_min', 'volunteers_count_max', 'tag_ids',
         ]
 
     def validate(self, attrs):
@@ -46,7 +56,6 @@ class EventCreateUpdateSerializer(serializers.ModelSerializer):
         status_value = attrs.get('status', getattr(instance, 'status', EventStatus.PLANNED))
         volunteers_count_min = attrs.get('volunteers_count_min', getattr(instance, 'volunteers_count_min', 1))
         volunteers_count_max = attrs.get('volunteers_count_max', getattr(instance, 'volunteers_count_max', 1))
-        city = attrs.get('city', getattr(instance, 'city', None))
 
         if date_start and date_end and date_end < date_start:
             raise serializers.ValidationError({'date_end': 'Дата окончания не может быть раньше даты начала.'})
@@ -55,18 +64,38 @@ class EventCreateUpdateSerializer(serializers.ModelSerializer):
         if status_value == EventStatus.ONGOING and date_start and date_start > timezone.now():
             raise serializers.ValidationError({'status': 'Нельзя перевести событие в статус "Идёт" до его начала.'})
 
-        request = self.context.get('request')
-        if request and request.user.role.code == 'city_coordinator' and city and request.user.city_id != city.id:
-            raise serializers.ValidationError({'city': 'Городской координатор может работать только со своим городом.'})
-
         if instance and instance.status == EventStatus.CANCELLED and status_value != EventStatus.CANCELLED:
             raise serializers.ValidationError({'status': 'Отменённое мероприятие нельзя изменить обратно через обычное редактирование.'})
 
         return attrs
 
     def create(self, validated_data):
-        validated_data['created_by'] = self.context['request'].user
-        return super().create(validated_data)
+        tag_ids = validated_data.pop('tag_ids', [])
+        user = self.context['request'].user
+        validated_data['created_by'] = user
+        # auto-assign city from the creator's profile
+        if 'city' not in validated_data and user.city_id:
+            validated_data['city_id'] = user.city_id
+        event = super().create(validated_data)
+        if tag_ids:
+            from apps.events.models import EventTag
+            EventTag.objects.bulk_create(
+                [EventTag(event=event, tag=tag) for tag in tag_ids],
+                ignore_conflicts=True,
+            )
+        return event
+
+    def update(self, instance, validated_data):
+        tag_ids = validated_data.pop('tag_ids', None)
+        event = super().update(instance, validated_data)
+        if tag_ids is not None:
+            from apps.events.models import EventTag
+            EventTag.objects.filter(event=event).delete()
+            EventTag.objects.bulk_create(
+                [EventTag(event=event, tag=tag) for tag in tag_ids],
+                ignore_conflicts=True,
+            )
+        return event
 
 
 class EventParticipationSerializer(serializers.ModelSerializer):
@@ -103,12 +132,6 @@ class EventParticipationSerializer(serializers.ModelSerializer):
 
         if instance is None and EventParticipation.objects.filter(event=event, user=user).exists():
             raise serializers.ValidationError({'user_id': 'Этот пользователь уже назначен на мероприятие.'})
-
-        if request and request.user.role.code == 'city_coordinator':
-            if event.city_id != request.user.city_id:
-                raise serializers.ValidationError({'event_id': 'Городской координатор может работать только с мероприятиями своего города.'})
-            if user.city_id != request.user.city_id:
-                raise serializers.ValidationError({'user_id': 'Нельзя назначать волонтёров из другого города.'})
 
         return attrs
 
@@ -196,3 +219,46 @@ def with_event_stats(queryset):
             distinct=True,
         ),
     ).prefetch_related('participations', 'participations__user', 'participations__user__city')
+
+
+class LectureRatingSerializer(serializers.ModelSerializer):
+    user = UserShortSerializer(read_only=True)
+    event_title = serializers.CharField(source='event.title', read_only=True)
+
+    class Meta:
+        model = LectureRating
+        fields = ['id', 'event', 'event_title', 'user', 'rating', 'comment', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'event_title', 'created_at', 'updated_at']
+
+    def validate_rating(self, value):
+        if not (1 <= value <= 5):
+            raise serializers.ValidationError('Оценка должна быть от 1 до 5.')
+        return value
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data.pop('user', None)
+        return super().update(instance, validated_data)
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['id', 'code', 'title', 'tag_type']
+
+
+class LectureMaterialSerializer(serializers.ModelSerializer):
+    uploaded_by = UserShortSerializer(read_only=True)
+    event_title = serializers.CharField(source='event.title', read_only=True)
+
+    class Meta:
+        model = LectureMaterial
+        fields = ['id', 'event', 'event_title', 'title', 'file_url', 'material_type', 'uploaded_by', 'created_at']
+        read_only_fields = ['id', 'uploaded_by', 'event_title', 'created_at']
+
+    def create(self, validated_data):
+        validated_data['uploaded_by'] = self.context['request'].user
+        return super().create(validated_data)

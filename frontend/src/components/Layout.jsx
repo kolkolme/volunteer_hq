@@ -1,12 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { User, LogOut, Settings, Users, BarChart3 } from 'lucide-react'
+import { User, LogOut, Users, BarChart3, Shield, BookOpen } from 'lucide-react'
 import PaletteSelector from './ui/PaletteSelector'
 import NotificationsButton from './ui/NotificationsButton'
 
 const Layout = ({ children }) => {
-  const { user, logout, isAdmin } = useAuth()
+  const { user, logout, isAdmin, isSuperuser, getRoleCode } = useAuth()
   const navigate = useNavigate()
+  const role = getRoleCode()
 
   const handleLogout = () => {
     logout()
@@ -45,6 +46,14 @@ const Layout = ({ children }) => {
                   >
                     <User className="h-5 w-5" />
                   </Link>
+                  {isSuperuser() && (
+                    <Link
+                      to="/superuser"
+                      className="btn-ios p-3"
+                    >
+                      <Shield className="h-5 w-5" />
+                    </Link>
+                  )}
                   {isAdmin() && (
                     <>
                       <Link

@@ -9,16 +9,14 @@ from rest_framework.views import APIView
 
 from apps.events.models import Event, EventParticipation, EventStatus, ParticipationStatus
 from apps.geography.models import City
-from apps.users.permissions import IsCoordinatorOrAbove
+from apps.users.permissions import IsAdminOrAbove
 from apps.users.models import User
 
 
 class DashboardBaseView(APIView):
-    permission_classes = [IsAuthenticated, IsCoordinatorOrAbove]
+    permission_classes = [IsAuthenticated, IsAdminOrAbove]
 
     def get_city_filter(self, request):
-        if request.user.role.code == 'city_coordinator' and request.user.city_id:
-            return request.user.city_id
         city = request.query_params.get('city')
         return int(city) if city else None
 

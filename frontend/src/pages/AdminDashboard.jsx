@@ -1,10 +1,104 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
+import { grantPermit, revokePermit } from '../services/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { Users, Calendar, TrendingUp, Award, MapPin, AlertTriangle } from 'lucide-react'
+import { Users, Calendar, TrendingUp, Award, MapPin, AlertTriangle, ShieldCheck } from 'lucide-react'
 import EventCreationForm from '../components/EventCreationForm'
 
+// ────────────────────────────────────────────────────────────────
+// Permit Management Component
+// ────────────────────────────────────────────────────────────────
+const PermitManagement = () => {
+  const [volunteers, setVolunteers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState({})
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const res = await api.get('/api/v1/users/', { params: { role__code: 'volunteer', page_size: 100 } })
+      setVolunteers(res.data.results || res.data)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [])
+
+  const handleGrant = async (userId) => {
+    setActionLoading((prev) => ({ ...prev, [userId]: true }))
+    try {
+      await grantPermit(userId)
+      load()
+    } catch (e) {
+      alert(e.response?.data?.detail || 'Ошибка')
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [userId]: false }))
+    }
+  }
+
+  const handleRevoke = async (userId) => {
+    setActionLoading((prev) => ({ ...prev, [userId]: true }))
+    try {
+      await revokePermit(userId)
+      load()
+    } catch (e) {
+      alert(e.response?.data?.detail || 'Ошибка')
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [userId]: false }))
+    }
+  }
+
+  if (loading) return <div className="glass-subtitle text-center py-12">Загрузка...</div>
+
+  return (
+    <div className="glass-panel rounded-3xl p-6 border border-white border-opacity-30">
+      <h2 className="text-xl font-bold mb-1">Управление разрешениями</h2>
+      <p className="text-sm opacity-70 mb-4">Для выдачи разрешения необходим рейтинг ≥ 7.0</p>
+      {volunteers.length === 0 ? (
+        <p className="text-sm opacity-60 text-center py-8">Волонтёров не найдено</p>
+      ) : (
+        <div className="space-y-3">
+          {volunteers.map((v) => (
+            <div key={v.id} className="flex items-center justify-between gap-4 p-4 glass-panel rounded-2xl border border-white border-opacity-20">
+              <div>
+                <p className="font-medium">{v.full_name || v.username}</p>
+                <p className="text-xs opacity-60">{v.city?.title || '—'} · Рейтинг: {v.avg_rating?.toFixed?.(1) ?? v.avg_rating ?? '0.0'}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                {v.has_permit && (
+                  <span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                    Разрешение выдано
+                  </span>
+                )}
+                {!v.has_permit ? (
+                  <button
+                    disabled={actionLoading[v.id] || (v.avg_rating || 0) < 7.0}
+                    onClick={() => handleGrant(v.id)}
+                    className="px-3 py-1.5 rounded-xl text-sm font-medium bg-green-500 text-white hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {actionLoading[v.id] ? '...' : 'Выдать'}
+                  </button>
+                ) : (
+                  <button
+                    disabled={actionLoading[v.id]}
+                    onClick={() => handleRevoke(v.id)}
+                    className="px-3 py-1.5 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 disabled:opacity-40 transition-colors"
+                  >
+                    {actionLoading[v.id] ? '...' : 'Отозвать'}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview')
   const [summary, setSummary] = useState({})
   const [activity, setActivity] = useState([])
   const [podium, setPodium] = useState([])
@@ -83,7 +177,30 @@ const AdminDashboard = () => {
         <p className="text-sm opacity-80 mt-2">Обзор волонтерской активности по всем мероприятиям</p>
       </div>
 
-      {/* KPI Cards */}
+      {/* Tabs */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+            activeTab === 'overview' ? 'bg-purple-600 text-white shadow-lg' : 'glass-panel glass-subtitle hover:opacity-80'
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" />
+          Обзор
+        </button>
+        <button
+          onClick={() => setActiveTab('permits')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+            activeTab === 'permits' ? 'bg-purple-600 text-white shadow-lg' : 'glass-panel glass-subtitle hover:opacity-80'
+          }`}
+        >
+          <ShieldCheck className="w-4 h-4" />
+          Разрешения
+        </button>
+      </div>
+
+      {activeTab === 'permits' && <PermitManagement />}
+      {activeTab === 'overview' && <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-panel rounded-2xl p-6 border border-white border-opacity-30 bg-gradient-to-br from-blue-500 from-opacity-10 to-cyan-500 to-opacity-10 hover:shadow-lg hover:shadow-blue-500/20 hover:border-opacity-50 transition-all duration-300">
           <div className="flex items-start gap-4">
@@ -292,6 +409,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+    </>}
     </div>
   )
 }

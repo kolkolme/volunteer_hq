@@ -8,6 +8,7 @@
 - Django REST Framework
 - SimpleJWT
 - django-filter
+- django-cors-headers
 - SQLite по умолчанию
 
 ## Что внутри
@@ -16,7 +17,7 @@
 - справочники: роли, города, типы мероприятий
 - мероприятия
 - участие волонтёров в мероприятиях
-- личные эндпоинты волонтёра
+- личные эндпоинты пользователя и волонтёра
 - dashboard-эндпоинты для штаба
 - JWT-авторизация
 - Django admin
@@ -35,7 +36,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 python manage.py makemigrations
 python manage.py migrate
-python manage.py createsuperuser
+python manage.py seed_demo
 python manage.py runserver
 ```
 
@@ -59,12 +60,12 @@ python manage.py runserver
 
 Рекомендуемые системные роли:
 
+- `superuser`
 - `admin`
-- `coordinator`
-- `city_coordinator`
 - `volunteer`
+- `user`
 
-Создай их через Django admin перед началом работы.
+Команда `python manage.py seed_demo` создаёт их автоматически и синхронизирует старые demo-данные со схемой ролей.
 
 ## Примечания
 
@@ -98,15 +99,17 @@ python manage.py runserver
 
 ### Тестовые пользователи
 
-- `admin / admin12345`
-- `coordinator / coord12345`
-- `citycoord1 / city12345`
-- `volunteer1 / vol123456`
+- `admin / admin12345` - superuser
+- `manager / manager123` - admin
+- `admin1 / admin12345` - admin
+- `volunteer1 / vol123456` - volunteer
+- `user1 / user12345` - user
 
 ### Важные улучшения API
 
 - мягкое удаление пользователей через `is_active = false`
-- валидация городских ограничений для `city_coordinator`
+- `PATCH /api/v1/auth/me/` для редактирования собственного профиля
 - защита от повторного назначения пользователя на одно мероприятие
 - корректные переходы статусов для участия и мероприятий
 - `my/participations/*` теперь валидируют состояние события и принимают `comment`
+- `seed_demo` синхронизирует старые роли `coordinator` и `city_coordinator` в новую схему ролей

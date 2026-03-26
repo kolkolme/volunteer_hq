@@ -157,8 +157,8 @@ const EventCreationForm = ({ onEventCreated }) => {
                 >
                   <option value="">Выберите город</option>
                   {cities.map((c) => (
-                    <option key={c.city_id || c.id} value={c.city_id || c.id}>
-                      {c.city_title || c.title}
+                    <option key={c.id} value={c.id}>
+                      {c.title}
                     </option>
                   ))}
                 </select>

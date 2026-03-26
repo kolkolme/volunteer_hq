@@ -93,3 +93,79 @@ class EventParticipation(models.Model):
 
     def __str__(self):
         return f'{self.user} -> {self.event}'
+
+
+class LectureRating(models.Model):
+    event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='ratings')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='lecture_ratings')
+    rating = models.PositiveSmallIntegerField()
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(fields=['event', 'user'], name='unique_lecture_rating'),
+        ]
+
+    def clean(self):
+        if not (1 <= self.rating <= 5):
+            raise ValidationError('Оценка должна быть от 1 до 5.')
+
+    def __str__(self):
+        return f'{self.user} rated {self.event} — {self.rating}/5'
+
+
+class TagType(models.TextChoices):
+    SUBJECT = 'subject', 'Предмет'
+    EXPERIENCE = 'experience', 'Стаж волонтёра'
+    DURATION = 'duration', 'Длина лекции'
+    TIME_SLOT = 'time_slot', 'Время'
+
+
+class Tag(models.Model):
+    code = models.CharField(max_length=64, unique=True, db_index=True)
+    title = models.CharField(max_length=255)
+    tag_type = models.CharField(max_length=20, choices=TagType.choices, db_index=True)
+
+    class Meta:
+        ordering = ['tag_type', 'title']
+
+    def __str__(self):
+        return f'[{self.tag_type}] {self.title}'
+
+
+class EventTag(models.Model):
+    event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='event_tags')
+    tag = models.ForeignKey('events.Tag', on_delete=models.CASCADE, related_name='event_tags')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['event', 'tag'], name='unique_event_tag'),
+        ]
+
+    def __str__(self):
+        return f'{self.event} — {self.tag}'
+
+
+class MaterialType(models.TextChoices):
+    PRESENTATION = 'presentation', 'Презентация'
+    TEXT = 'text', 'Текст'
+    ASSIGNMENT = 'assignment', 'Задание'
+    OTHER = 'other', 'Другое'
+
+
+class LectureMaterial(models.Model):
+    event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='materials')
+    title = models.CharField(max_length=255)
+    file_url = models.URLField(max_length=2000)
+    material_type = models.CharField(max_length=20, choices=MaterialType.choices, default=MaterialType.OTHER)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='uploaded_materials')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.title} ({self.event})'

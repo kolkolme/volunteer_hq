@@ -3,9 +3,9 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from apps.users.views import MeView, RoleViewSet, UserViewSet, CustomTokenObtainPairView, LogoutView, RegisterView
+from apps.users.views import MeView, RoleViewSet, UserViewSet, CustomTokenObtainPairView, LogoutView, RegisterView, VolunteerApplicationViewSet, ChatRoomViewSet, MessageViewSet, ComplaintViewSet
 from apps.geography.views import CityViewSet
-from apps.events.views import EventTypeViewSet, EventViewSet, EventParticipationViewSet, MyEventsView, MyStatsView, my_participation_accept, my_participation_decline, MyParticipationsView
+from apps.events.views import EventTypeViewSet, EventViewSet, EventParticipationViewSet, MyEventsView, MyStatsView, my_participation_accept, my_participation_decline, MyParticipationsView, LectureRatingViewSet, TagViewSet, LectureMaterialViewSet
 from apps.dashboard.views import DashboardSummaryView, DashboardActivityView, DashboardPodiumView, DashboardCalendarView, DashboardCitiesView, DashboardProblemsView
 
 router = DefaultRouter()
@@ -15,6 +15,13 @@ router.register('users', UserViewSet, basename='user')
 router.register('event-types', EventTypeViewSet, basename='event-type')
 router.register('events', EventViewSet, basename='event')
 router.register('participations', EventParticipationViewSet, basename='participation')
+router.register('my/ratings', LectureRatingViewSet, basename='my-rating')
+router.register('volunteer-applications', VolunteerApplicationViewSet, basename='volunteer-application')
+router.register('tags', TagViewSet, basename='tag')
+router.register('materials', LectureMaterialViewSet, basename='material')
+router.register('chats', ChatRoomViewSet, basename='chat')
+router.register('messages', MessageViewSet, basename='message')
+router.register('complaints', ComplaintViewSet, basename='complaint')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

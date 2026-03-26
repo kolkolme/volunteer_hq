@@ -33,6 +33,10 @@ const Profile = () => {
         return <XCircle className="h-5 w-5 text-red-600" />
       case 'cancelled':
         return <XCircle className="h-5 w-5 text-gray-600" />
+      case 'attended':
+        return <CheckCircle className="h-5 w-5 text-blue-600" />
+      case 'absent':
+        return <XCircle className="h-5 w-5 text-orange-600" />
       default:
         return <Clock className="h-5 w-5 text-yellow-600" />
     }
@@ -48,6 +52,10 @@ const Profile = () => {
         return 'Отказ'
       case 'cancelled':
         return 'Отменено'
+      case 'attended':
+        return 'Присутствовал'
+      case 'absent':
+        return 'Не пришёл'
       default:
         return status
     }
@@ -83,7 +91,7 @@ const Profile = () => {
             <div className="space-y-2">
               <p><span className="font-medium">Всего участий:</span> {participations.length}</p>
               <p><span className="font-medium">Подтверждено:</span> {participations.filter(p => p.status === 'accepted').length}</p>
-              <p><span className="font-medium">Завершено:</span> {participations.filter(p => p.status === 'completed').length}</p>
+              <p><span className="font-medium">Завершено:</span> {participations.filter(p => p.status === 'attended').length}</p>
             </div>
           </div>
         </div>
@@ -142,9 +150,9 @@ const Profile = () => {
                         {participation.event.title}
                       </h4>
                       <p className="text-sm text-gray-600">
-                        {new Date(participation.event.start_date).toLocaleDateString('ru-RU')} в {participation.event.start_time}
+                        {new Date(participation.event.date_start).toLocaleDateString('ru-RU')} в {new Date(participation.event.date_start).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                       </p>
-                      <p className="text-sm text-gray-500">{participation.event.location}</p>
+                      <p className="text-sm text-gray-500">{participation.event.address}</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -152,6 +160,8 @@ const Profile = () => {
                       participation.status === 'accepted' ? 'bg-green-100 text-green-800' :
                       participation.status === 'declined' ? 'bg-red-100 text-red-800' :
                       participation.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
+                      participation.status === 'attended' ? 'bg-blue-100 text-blue-800' :
+                      participation.status === 'absent' ? 'bg-orange-100 text-orange-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
                       {getStatusText(participation.status)}

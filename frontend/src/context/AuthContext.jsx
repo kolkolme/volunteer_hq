@@ -17,25 +17,19 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    console.log('AuthProvider init, token exists:', !!token)
     if (token) {
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      console.log('Token found, fetching user...')
       fetchUser()
     } else {
-      console.log('No token, setting loading to false')
       setLoading(false)
     }
   }, [])
 
   const fetchUser = async () => {
     try {
-      console.log('Fetching user...')
       const response = await api.get('/api/v1/auth/me/')
-      console.log('User fetched:', response.data)
       setUser(response.data)
     } catch (error) {
-      console.error('Failed to fetch user:', error)
       localStorage.removeItem('token')
       delete api.defaults.headers.common['Authorization']
     } finally {
@@ -45,20 +39,17 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      console.log('Logging in...')
       const response = await api.post('/api/v1/auth/token/', {
         username,
         password,
       })
       const { access, refresh } = response.data
-      console.log('Login successful, tokens:', { access: access.substring(0,10) + '...', refresh: refresh.substring(0,10) + '...' })
       localStorage.setItem('token', access)
       localStorage.setItem('refreshToken', refresh)
       api.defaults.headers.common['Authorization'] = `Bearer ${access}`
       await fetchUser()
       return { success: true }
     } catch (error) {
-      console.error('Login failed:', error)
       return { success: false, error: error.response?.data?.detail || 'Login failed' }
     }
   }
@@ -85,7 +76,27 @@ export const AuthProvider = ({ children }) => {
   }
 
   const isAdmin = () => {
-    return user?.role?.code === 'admin' || user?.role?.code === 'coordinator'
+    return user?.role?.code === 'admin' || user?.role?.code === 'superuser'
+  }
+
+  const isSuperuser = () => {
+    return user?.role?.code === 'superuser'
+  }
+
+  const isCoordinator = () => {
+    return user?.role?.code === 'coordinator'
+  }
+
+  const isVolunteer = () => {
+    return user?.role?.code === 'volunteer'
+  }
+
+  const isUser = () => {
+    return user?.role?.code === 'user'
+  }
+
+  const getRoleCode = () => {
+    return user?.role?.code || null
   }
 
   const value = {
@@ -94,7 +105,13 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    refreshUser: fetchUser,
     isAdmin,
+    isSuperuser,
+    isCoordinator,
+    isVolunteer,
+    isUser,
+    getRoleCode,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
