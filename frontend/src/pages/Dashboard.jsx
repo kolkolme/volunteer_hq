@@ -7,6 +7,7 @@ import RatingLeaderboard from '../components/RatingLeaderboard'
 import GlassCard from '../components/ui/GlassCard'
 import GlassInput from '../components/ui/GlassInput'
 import IosButton from '../components/ui/IosButton'
+import MobileBottomNav from '../components/ui/MobileBottomNav'
 import {
   BookOpen, Calendar, CheckCircle, Clock, MessageSquare,
   Plus, Sparkles, Star, Tag, Trophy, Users, FileText, ClipboardList, Search,
@@ -18,12 +19,12 @@ import {
 const TAG_TYPE_LABELS = { subject: 'Предмет', experience: 'Стаж', duration: 'Длительность', time_slot: 'Время' }
 const TAG_TYPE_ORDER = ['subject', 'experience', 'duration', 'time_slot']
 const TABS = [
-  { id: 'my_lectures', label: 'Мои лекции',    icon: BookOpen },
-  { id: 'create',      label: 'Создать лекцию', icon: Plus },
-  { id: 'accept',      label: 'Принять лекцию', icon: ClipboardList },
-  { id: 'stats',       label: 'Статистика',     icon: Star },
-  { id: 'rating',      label: 'Рейтинг',          icon: Trophy },
-  { id: 'chats',       label: 'Чаты',           icon: MessageSquare },
+  { id: 'my_lectures', label: 'Мои лекции',    short: 'Мои',      icon: BookOpen },
+  { id: 'create',      label: 'Создать лекцию', short: 'Создать',  icon: Plus },
+  { id: 'accept',      label: 'Принять лекцию', short: 'Принять',  icon: ClipboardList },
+  { id: 'stats',       label: 'Статистика',     short: 'Статист.',  icon: Star },
+  { id: 'rating',      label: 'Рейтинг',       short: 'Рейтинг',  icon: Trophy },
+  { id: 'chats',       label: 'Чаты',           short: 'Чаты',     icon: MessageSquare },
 ]
 
 // ──────────────────────────────────────────────
@@ -547,7 +548,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('my_lectures')
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20 lg:pb-6">
       {/* Header */}
       <GlassCard className="p-4 sm:p-6">
         <div className="flex items-center gap-3 sm:gap-4">
@@ -568,8 +569,8 @@ const Dashboard = () => {
         </div>
       </GlassCard>
 
-      {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+      {/* Tabs — desktop only (mobile uses bottom nav below) */}
+      <div className="hidden lg:flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -593,6 +594,9 @@ const Dashboard = () => {
         {activeTab === 'rating'      && <RatingLeaderboard currentUser={user} />}
         {activeTab === 'chats'       && <ChatWidget user={user} color="amber" />}
       </GlassCard>
+
+      {/* Mobile bottom navigation bar */}
+      <MobileBottomNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} color="amber" />
     </div>
   )
 }

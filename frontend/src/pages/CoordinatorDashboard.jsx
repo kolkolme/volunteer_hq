@@ -11,13 +11,14 @@ import {
 } from '../services/api'
 import ChatWidget from '../components/ChatWidget'
 import RatingLeaderboard from '../components/RatingLeaderboard'
+import MobileBottomNav from '../components/ui/MobileBottomNav'
 import { MessageSquare, AlertTriangle, ClipboardList, Check, X, Trophy } from 'lucide-react'
 
 const TABS = [
-  { id: 'complaints', label: 'Жалобы', icon: AlertTriangle },
-  { id: 'events', label: 'Лекции', icon: ClipboardList },
-  { id: 'rating', label: 'Рейтинг', icon: Trophy },
-  { id: 'chats', label: 'Чаты', icon: MessageSquare },
+  { id: 'complaints', label: 'Жалобы',   short: 'Жалобы', icon: AlertTriangle },
+  { id: 'events',     label: 'Лекции',   short: 'Лекции', icon: ClipboardList },
+  { id: 'rating',     label: 'Рейтинг',   short: 'Рейтинг', icon: Trophy },
+  { id: 'chats',      label: 'Чаты',     short: 'Чаты', icon: MessageSquare },
 ]
 
 // ────────────────────────────────────────────────────────────────
@@ -246,7 +247,7 @@ const CoordinatorDashboard = () => {
   const [activeTab, setActiveTab] = useState('complaints')
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20 lg:pb-6">
       {/* Header */}
       <GlassCard className="p-6">
         <div className="flex items-center gap-4">
@@ -267,8 +268,8 @@ const CoordinatorDashboard = () => {
         </div>
       </GlassCard>
 
-      {/* Tabs */}
-      <div className="flex gap-2 flex-wrap">
+      {/* Tabs — desktop only (mobile uses bottom nav below) */}
+      <div className="hidden lg:flex gap-2 flex-wrap">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -292,6 +293,9 @@ const CoordinatorDashboard = () => {
         {activeTab === 'rating' && <RatingLeaderboard currentUser={user} />}
         {activeTab === 'chats' && <ChatWidget user={user} color="amber" height="h-[500px]" />}
       </GlassCard>
+
+      {/* Mobile bottom navigation bar */}
+      <MobileBottomNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} color="amber" />
     </div>
   )
 }
