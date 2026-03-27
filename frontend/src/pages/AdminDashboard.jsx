@@ -16,6 +16,7 @@ import RatingLeaderboard from '../components/RatingLeaderboard'
 import GlassCard from '../components/ui/GlassCard'
 import IosButton from '../components/ui/IosButton'
 import GlassInput from '../components/ui/GlassInput'
+import MobileBottomNav from '../components/ui/MobileBottomNav'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -1073,12 +1074,12 @@ const ComplaintsTab = () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TABS = [
-  { id: 'overview',    label: 'Обзор',       icon: LayoutDashboard },
-  { id: 'events',      label: 'Мероприятия', icon: ClipboardList   },
-  { id: 'volunteers',  label: 'Волонтёры',   icon: Users           },
-  { id: 'permits',     label: 'Разрешения',  icon: ShieldCheck     },
-  { id: 'complaints',  label: 'Жалобы',      icon: AlertTriangle   },
-  { id: 'rating',      label: 'Рейтинг',     icon: Trophy          },
+  { id: 'overview',    label: 'Обзор',       short: 'Обзор',  icon: LayoutDashboard },
+  { id: 'events',      label: 'Мероприятия', short: 'Лекции', icon: ClipboardList   },
+  { id: 'volunteers',  label: 'Волонтёры',   short: 'Люди',   icon: Users           },
+  { id: 'permits',     label: 'Разрешения',  short: 'Доступ', icon: ShieldCheck     },
+  { id: 'complaints',  label: 'Жалобы',      short: 'Жалобы', icon: AlertTriangle   },
+  { id: 'rating',      label: 'Рейтинг',     short: 'Рейтинг',icon: Trophy          },
 ]
 
 const AdminDashboard = () => {
@@ -1086,7 +1087,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview')
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 pb-20 lg:pb-6">
       {/* Header — matches user Dashboard style */}
       <GlassCard className="p-4 sm:p-6">
         <div className="flex items-center gap-4">
@@ -1113,8 +1114,8 @@ const AdminDashboard = () => {
         </div>
       </GlassCard>
 
-      {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+      {/* Tabs — desktop only */}
+      <div className="hidden lg:flex gap-2 pb-1">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -1139,6 +1140,8 @@ const AdminDashboard = () => {
         {activeTab === 'complaints' && <ComplaintsTab />}
         {activeTab === 'rating'     && <RatingLeaderboard currentUser={null} />}
       </GlassCard>
+
+      <MobileBottomNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   )
 }
