@@ -4,22 +4,22 @@
 
 /* ===== DASHBOARD ADMIN DESIGN SYSTEM ===== */
 :root {
-  /* Backgrounds */
-  --bg-app:       #0f1117;
-  --bg-sidebar:   #13151c;
-  --bg-card:      #1a1d27;
-  --bg-card-hover:#1f2333;
-  --bg-input:     #12141e;
-  --bg-header:    #13151c;
+  /* Backgrounds — default: WHITE / LIGHT theme */
+  --bg-app:       #f5f5f5;
+  --bg-sidebar:   #ffffff;
+  --bg-card:      #ffffff;
+  --bg-card-hover:#f0f0f0;
+  --bg-input:     #f0f0f0;
+  --bg-header:    #ffffff;
 
   /* Borders */
-  --border:       #2a2d3e;
+  --border:       #e2e2e2;
   --border-focus: #6366f1;
 
   /* Text */
-  --text-primary:   #e2e4f0;
-  --text-secondary: #7b82a0;
-  --text-muted:     #4a4f6a;
+  --text-primary:   #1a1a1a;
+  --text-secondary: #555555;
+  --text-muted:     #999999;
 
   /* Accent */
   --accent:       #6366f1;
@@ -33,17 +33,17 @@
   --blue:   #3b82f6;
 
   /* Shadows */
-  --shadow-card: 0 2px 8px rgba(0,0,0,0.4);
-  --shadow-pop:  0 8px 32px rgba(0,0,0,0.6);
+  --shadow-card: 0 1px 4px rgba(0,0,0,0.08);
+  --shadow-pop:  0 4px 16px rgba(0,0,0,0.12);
 
   /* Legacy aliases (keeps old JSX working) */
-  --text-primary-rgb: 226, 228, 240;
+  --text-primary-rgb: 26, 26, 26;
   --bg-primary:    var(--bg-app);
   --bg-secondary:  var(--bg-card);
   --card-bg:       var(--bg-card);
   --input-bg:      var(--bg-input);
   --border-primary:var(--border);
-  --scrollbar-thumb: #2a2d3e;
+  --scrollbar-thumb: #cccccc;
   --shadow-primary:  var(--shadow-card);
   --shadow-secondary:var(--shadow-card);
 }
@@ -71,7 +71,7 @@ code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #3a3f58; }
+::-webkit-scrollbar-thumb:hover { background: var(--border); }
 .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 
@@ -104,9 +104,12 @@ code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 :root[data-palette="white"][data-theme="dark"] {
   --text-primary: #e8e8e8;
   --text-secondary: #aaaaaa;
+  --text-muted: #666666;
   --bg-primary: #1a1a1a;
   --bg-secondary: #242424;
   --bg-app: #1a1a1a;
+  --bg-header: #242424;
+  --bg-sidebar: #1e1e1e;
   --bg-card: #242424;
   --bg-card-hover: #2e2e2e;
   --bg-input: #2e2e2e;
@@ -125,9 +128,12 @@ code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 :root[data-palette="black"][data-theme="dark"] {
   --text-primary: #e8e8e8;
   --text-secondary: #b0b0b0;
+  --text-muted: #606060;
   --bg-primary: #0a0a0a;
   --bg-secondary: #141414;
   --bg-app: #0a0a0a;
+  --bg-header: #141414;
+  --bg-sidebar: #111111;
   --bg-card: #141414;
   --bg-card-hover: #1e1e1e;
   --bg-input: #1e1e1e;
@@ -145,9 +151,12 @@ code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 :root[data-palette="black"][data-theme="light"] {
   --text-primary: #1a1a1a;
   --text-secondary: #555555;
+  --text-muted: #999999;
   --bg-primary: #f0f0f0;
   --bg-secondary: #ffffff;
   --bg-app: #f0f0f0;
+  --bg-header: #ffffff;
+  --bg-sidebar: #f5f5f5;
   --bg-card: #ffffff;
   --bg-card-hover: #ebebeb;
   --bg-input: #ebebeb;
@@ -166,9 +175,12 @@ code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 :root[data-palette="gray"][data-theme="light"] {
   --text-primary: #1e1e1e;
   --text-secondary: #5a5a5a;
+  --text-muted: #909090;
   --bg-primary: #e8e8e8;
   --bg-secondary: #f2f2f2;
   --bg-app: #e8e8e8;
+  --bg-header: #f2f2f2;
+  --bg-sidebar: #eeeeee;
   --bg-card: #f2f2f2;
   --bg-card-hover: #ececec;
   --bg-input: #e4e4e4;
@@ -186,9 +198,12 @@ code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 :root[data-palette="gray"][data-theme="dark"] {
   --text-primary: #dcdcdc;
   --text-secondary: #9a9a9a;
+  --text-muted: #606060;
   --bg-primary: #2a2a2a;
   --bg-secondary: #333333;
   --bg-app: #2a2a2a;
+  --bg-header: #333333;
+  --bg-sidebar: #2e2e2e;
   --bg-card: #333333;
   --bg-card-hover: #3d3d3d;
   --bg-input: #3a3a3a;
@@ -207,9 +222,12 @@ code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 :root[data-palette="beige"][data-theme="light"] {
   --text-primary: #3a2e24;
   --text-secondary: #7a6555;
+  --text-muted: #b09a80;
   --bg-primary: #f0e8dc;
   --bg-secondary: #faf4ec;
   --bg-app: #f0e8dc;
+  --bg-header: #faf4ec;
+  --bg-sidebar: #f5ede2;
   --bg-card: #faf4ec;
   --bg-card-hover: #f5ede2;
   --bg-input: #ece3d8;
@@ -227,9 +245,12 @@ code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 :root[data-palette="beige"][data-theme="dark"] {
   --text-primary: #f0e0cc;
   --text-secondary: #b89a7a;
+  --text-muted: #7a6040;
   --bg-primary: #2a2018;
   --bg-secondary: #342a20;
   --bg-app: #2a2018;
+  --bg-header: #342a20;
+  --bg-sidebar: #2e2418;
   --bg-card: #342a20;
   --bg-card-hover: #3e3228;
   --bg-input: #3e3228;
@@ -248,9 +269,12 @@ code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 :root[data-palette="beeline"][data-theme="dark"] {
   --text-primary: #ffffff;
   --text-secondary: #aaaaaa;
+  --text-muted: #606060;
   --bg-primary: #000000;
   --bg-secondary: #0d0d0d;
   --bg-app: #000000;
+  --bg-header: #0d0d0d;
+  --bg-sidebar: #080808;
   --bg-card: #111111;
   --bg-card-hover: #1a1a1a;
   --bg-input: #1a1a1a;
@@ -268,9 +292,12 @@ code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
 :root[data-palette="beeline"][data-theme="light"] {
   --text-primary: #ffffff;
   --text-secondary: #c8c8c8;
+  --text-muted: #707070;
   --bg-primary: #000000;
   --bg-secondary: #0d0d0d;
   --bg-app: #000000;
+  --bg-header: #0d0d0d;
+  --bg-sidebar: #080808;
   --bg-card: #111111;
   --bg-card-hover: #1a1a1a;
   --bg-input: #1a1a1a;
