@@ -10,8 +10,9 @@ import IosButton from '../components/ui/IosButton'
 import MobileBottomNav from '../components/ui/MobileBottomNav'
 import {
   BookOpen, Calendar, CheckCircle, Clock, MessageSquare,
-  Plus, Sparkles, Star, Tag, Trophy, Users, FileText, ClipboardList, Search,
+  Plus, Settings, Sparkles, Star, Tag, Trophy, Users, FileText, ClipboardList, Search,
 } from 'lucide-react'
+import { PaletteGrid } from '../components/ui/PaletteSelector'
 
 // ──────────────────────────────────────────────
 // Constants
@@ -25,6 +26,7 @@ const TABS = [
   { id: 'stats',       label: 'Статистика',     short: 'Статист.',  icon: Star },
   { id: 'rating',      label: 'Рейтинг',       short: 'Рейтинг',  icon: Trophy },
   { id: 'chats',       label: 'Чаты',           short: 'Чаты',     icon: MessageSquare },
+  { id: 'appearance',  label: 'Настройки',      short: 'Вид',      icon: Settings },
 ]
 
 // ──────────────────────────────────────────────
@@ -658,6 +660,12 @@ const Dashboard = () => {
         {activeTab === 'stats'       && <StatsTab />}
         {activeTab === 'rating'      && <RatingLeaderboard currentUser={user} />}
         {activeTab === 'chats'       && <ChatWidget user={user} color="amber" />}
+        {activeTab === 'appearance'  && (
+          <div className="space-y-4">
+            <h3 className="text-base font-semibold glass-title">Внешний вид</h3>
+            <PaletteGrid />
+          </div>
+        )}
       </GlassCard>
 
       {/* Mobile bottom navigation bar */}
