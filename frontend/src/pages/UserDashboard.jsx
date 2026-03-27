@@ -107,8 +107,9 @@ const UserDashboard = () => {
 
   const fetchData = async () => {
     try {
+      const today = new Date().toISOString().split('T')[0]
       const [eventsRes, participationsRes, ratingsRes, appRes, tagsRes] = await Promise.all([
-        api.get('/api/v1/events/'),
+        api.get(`/api/v1/events/?status=planned&date_from=${today}&ordering=date_start&page_size=100`),
         api.get('/api/v1/my/participations/'),
         api.get('/api/v1/my/ratings/'),
         api.get('/api/v1/volunteer-applications/'),
