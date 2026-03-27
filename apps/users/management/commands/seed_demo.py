@@ -5,8 +5,8 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from apps.events.models import Event, EventParticipation, EventStatus, EventType, ParticipationStatus, Tag, TagType
-from apps.users.models import Role, User
+from apps.events.models import Event, EventParticipation, EventStatus, EventType, LectureRating, ParticipationStatus, Tag, TagType
+from apps.users.models import Complaint, ComplaintStatus, Role, User, VolunteerApplication, VolunteerApplicationStatus
 
 
 class Command(BaseCommand):
@@ -83,7 +83,7 @@ class Command(BaseCommand):
 
         role_objects = self._sync_roles()
 
-        # Суперпользователь
+        # ── Superuser ───────────────────────────────────────────────────
         admin, created = User.objects.get_or_create(
             username='admin',
             defaults={
@@ -106,7 +106,7 @@ class Command(BaseCommand):
             admin.set_password('admin12345')
             admin.save(update_fields=['password'])
 
-        # Администратор
+        # ── Admin ───────────────────────────────────────────────────────
         admin_user, created = User.objects.get_or_create(
             username='manager',
             defaults={
@@ -127,7 +127,7 @@ class Command(BaseCommand):
             admin_user.set_password('manager123')
             admin_user.save(update_fields=['password'])
 
-        # Координатор-демо
+        # ── Coordinator ─────────────────────────────────────────────────
         coord_user, created = User.objects.get_or_create(
             username='coord1',
             defaults={
@@ -149,10 +149,12 @@ class Command(BaseCommand):
             coord_user.set_password('coord123456')
             coord_user.save(update_fields=['password'])
 
+        # ── Volunteers ──────────────────────────────────────────────────
         volunteer_names = [
-            ('Иван', 'Петров'), ('Анна', 'Соколова'), ('Мария', 'Иванова'), ('Дмитрий', 'Кузнецов'),
-            ('Елена', 'Морозова'), ('Алексей', 'Смирнов'), ('Ольга', 'Попова'), ('Никита', 'Орлов'),
-            ('София', 'Васильева'), ('Павел', 'Федоров'), ('Алина', 'Новикова'), ('Максим', 'Зайцев'),
+            ('Иван', 'Петров'), ('Анна', 'Соколова'), ('Мария', 'Иванова'),
+            ('Дмитрий', 'Кузнецов'), ('Елена', 'Морозова'), ('Алексей', 'Смирнов'),
+            ('Ольга', 'Попова'), ('Никита', 'Орлов'), ('София', 'Васильева'),
+            ('Павел', 'Федоров'), ('Алина', 'Новикова'), ('Максим', 'Зайцев'),
             ('Дарья', 'Лебедева'), ('Роман', 'Сергеев'), ('Юлия', 'Крылова'),
         ]
         volunteers = []
@@ -177,7 +179,7 @@ class Command(BaseCommand):
                 user.save(update_fields=['password'])
             volunteers.append(user)
 
-        # Обычные пользователи (посетители лекций)
+        # ── Visitors (regular users) ────────────────────────────────────
         visitor_names = [
             ('Артём', 'Козлов'), ('Екатерина', 'Белова'), ('Виктор', 'Громов'),
             ('Наталья', 'Степанова'), ('Сергей', 'Маслов'), ('Татьяна', 'Ефимова'),
@@ -206,93 +208,280 @@ class Command(BaseCommand):
                 user.save(update_fields=['password'])
             visitors.append(user)
 
+        # ── Event types ─────────────────────────────────────────────────
         event_types_data = {
-            'lecture': ('Лекция', 'Просветительская лекция'),
+            'lecture':  ('Лекция',       'Просветительская лекция'),
             'workshop': ('Мастер-класс', 'Практическое занятие'),
-            'meeting': ('Встреча', 'Организационная встреча'),
+            'meeting':  ('Встреча',      'Организационная встреча'),
+            'seminar':  ('Семинар',      'Научно-практический семинар'),
         }
         event_type_objects = {}
-        for code, payload in event_types_data.items():
+        for code, (title, desc) in event_types_data.items():
             event_type_objects[code], _ = EventType.objects.get_or_create(
-                code=code,
-                defaults={'title': payload[0], 'description': payload[1]},
+                code=code, defaults={'title': title, 'description': desc},
             )
 
+        # ── Tags ────────────────────────────────────────────────────────
+        tags_data = [
+            (TagType.SUBJECT,     'english',      'Английский язык'),
+            (TagType.SUBJECT,     'it',           'Информационные технологии'),
+            (TagType.SUBJECT,     'finance',      'Финансы'),
+            (TagType.SUBJECT,     'ecology',      'Экология'),
+            (TagType.SUBJECT,     'health',       'Здоровье'),
+            (TagType.SUBJECT,     'psychology',   'Психология'),
+            (TagType.SUBJECT,     'science',      'Наука'),
+            (TagType.EXPERIENCE,  'beginner',     'Для начинающих'),
+            (TagType.EXPERIENCE,  'intermediate', 'Средний уровень'),
+            (TagType.EXPERIENCE,  'expert',       'Для экспертов'),
+            (TagType.DURATION,    '30min',        '30 минут'),
+            (TagType.DURATION,    '1h',           '1 час'),
+            (TagType.DURATION,    '2h',           '2 часа'),
+            (TagType.TIME_SLOT,   'morning',      'Утро'),
+            (TagType.TIME_SLOT,   'afternoon',    'День'),
+            (TagType.TIME_SLOT,   'evening',      'Вечер'),
+        ]
+        tag_objects = {}
+        for tag_type, code, title in tags_data:
+            t, _ = Tag.objects.get_or_create(code=code, defaults={'title': title, 'tag_type': tag_type})
+            tag_objects[code] = t
+
+        # ── Events ──────────────────────────────────────────────────────
+        lecture_titles = [
+            ('lecture',  'Введение в финансовую грамотность',               'finance'),
+            ('lecture',  'Основы кибербезопасности для школьников',          'it'),
+            ('lecture',  'Английский язык: разговорный клуб',                'english'),
+            ('lecture',  'Экология и устойчивое развитие',                   'ecology'),
+            ('lecture',  'Психология общения и уверенность в себе',          'psychology'),
+            ('workshop', 'Мастер-класс по программированию на Python',       'it'),
+            ('workshop', 'Финансовое планирование: создаём бюджет',          'finance'),
+            ('workshop', 'Публичные выступления и ораторское мастерство',    'psychology'),
+            ('lecture',  'Здоровый образ жизни: советы врача',               'health'),
+            ('seminar',  'Карьера в IT: как начать путь в технологиях',      'it'),
+            ('lecture',  'История России: ключевые события XX века',         'science'),
+            ('workshop', 'Мастер-класс по первой медицинской помощи',        'health'),
+            ('lecture',  'Инвестиции для начинающих: акции и облигации',     'finance'),
+            ('seminar',  'Экологические проблемы современного города',       'ecology'),
+            ('lecture',  'Английский для путешественников',                  'english'),
+            ('workshop', 'Создание резюме и подготовка к собеседованию',     'psychology'),
+            ('lecture',  'Основы машинного обучения без программирования',   'it'),
+            ('seminar',  'Волонтёрское движение: опыт и перспективы',        'science'),
+            ('lecture',  'Профилактика выгорания: психологический практикум','psychology'),
+            ('meeting',  'Организационная встреча волонтёров',               'beginner'),
+            ('lecture',  'Цифровая безопасность в социальных сетях',         'it'),
+            ('workshop', 'Управление временем: метод GTD',                   'psychology'),
+            ('lecture',  'Правовая грамотность для молодёжи',                'science'),
+            ('seminar',  'Стартапы и предпринимательство с нуля',            'finance'),
+            ('lecture',  'Осознанное потребление и экологичный быт',         'ecology'),
+            ('workshop', 'Дизайн-мышление для решения задач',                'it'),
+            ('lecture',  'Нейронауки: как работает мозг',                    'science'),
+            ('seminar',  'Здоровое питание: мифы и реальность',              'health'),
+            ('lecture',  'English Pronunciation Workshop',                    'english'),
+            ('meeting',  'Подведение итогов семестра',                       'beginner'),
+        ]
+
         now = timezone.now()
-        statuses = [EventStatus.PLANNED, EventStatus.PLANNED, EventStatus.COMPLETED, EventStatus.COMPLETED, EventStatus.CANCELLED]
+        rng = random.Random(42)
         created_events = []
-        for event_index in range(1, 21):
-            event_type = list(event_type_objects.values())[(event_index - 1) % len(event_type_objects)]
-            start = now + timedelta(days=(event_index - 10), hours=((event_index * 3) % 8 + 9))
+
+        for i, (etype_code, title, tag_code) in enumerate(lecture_titles):
+            etype = event_type_objects.get(etype_code, event_type_objects['lecture'])
+            days_offset = i - 20
+            hour = 9 + (i * 2) % 9
+            start = now + timedelta(days=days_offset, hours=hour)
             end = start + timedelta(hours=2)
-            status_value = statuses[(event_index - 1) % len(statuses)]
+
+            if days_offset < -3:
+                status = EventStatus.COMPLETED
+            elif days_offset < 0:
+                status = rng.choice([EventStatus.COMPLETED, EventStatus.CANCELLED])
+            elif days_offset == 0:
+                status = EventStatus.ONGOING
+            else:
+                status = EventStatus.PLANNED
+
             event, _ = Event.objects.get_or_create(
-                title=f'{event_type.title} #{event_index}',
+                title=title,
                 defaults={
-                    'event_type': event_type,
-                    'description': f'Тестовое {event_type.title.lower()} #{event_index}',
+                    'event_type': etype,
+                    'description': f'Открытое мероприятие для всех желающих. Тема: «{title}». Приходите и приводите друзей!',
                     'date_start': start,
                     'date_end': end,
-                    'status': status_value,
-                    'volunteers_count_min': 2,
-                    'volunteers_count_max': 5,
+                    'status': status,
+                    'volunteers_count_min': 1,
+                    'volunteers_count_max': rng.randint(2, 5),
                     'created_by': admin_user,
                 },
             )
-            created_events.append(event)
+            created_events.append((event, tag_code))
 
-        rng = random.Random(42)
-        status_pool_active = [ParticipationStatus.PENDING, ParticipationStatus.ACCEPTED, ParticipationStatus.DECLINED]
-        status_pool_completed = [ParticipationStatus.ATTENDED, ParticipationStatus.ABSENT, ParticipationStatus.ATTENDED]
-
-        for event in created_events:
+        # ── Participations ──────────────────────────────────────────────
+        all_participations = []
+        for event, tag_code in created_events:
             shuffled = volunteers[:]
             rng.shuffle(shuffled)
-            for volunteer in shuffled[:rng.randint(2, min(5, len(shuffled)))]:
+            count = rng.randint(2, min(event.volunteers_count_max, len(shuffled)))
+            for volunteer in shuffled[:count]:
                 if event.status == EventStatus.COMPLETED:
-                    participation_status = rng.choice(status_pool_completed)
+                    p_status = rng.choices(
+                        [ParticipationStatus.ATTENDED, ParticipationStatus.ABSENT],
+                        weights=[4, 1],
+                    )[0]
                 elif event.status == EventStatus.CANCELLED:
-                    participation_status = ParticipationStatus.CANCELLED
+                    p_status = ParticipationStatus.CANCELLED
+                elif event.status == EventStatus.ONGOING:
+                    p_status = ParticipationStatus.ACCEPTED
                 else:
-                    participation_status = rng.choice(status_pool_active)
+                    p_status = rng.choices(
+                        [ParticipationStatus.PENDING, ParticipationStatus.ACCEPTED, ParticipationStatus.DECLINED],
+                        weights=[3, 4, 1],
+                    )[0]
 
-                participation, _ = EventParticipation.objects.get_or_create(
+                part, _ = EventParticipation.objects.get_or_create(
                     event=event,
                     user=volunteer,
+                    defaults={'status': p_status, 'comment': 'Создано seed-командой'},
+                )
+                if p_status in {ParticipationStatus.ACCEPTED, ParticipationStatus.ATTENDED}:
+                    if not part.accepted_at:
+                        part.accepted_at = event.date_start - timedelta(days=1)
+                if p_status != ParticipationStatus.PENDING:
+                    if not part.responded_at:
+                        part.responded_at = event.date_start - timedelta(days=1)
+                part.save()
+                all_participations.append(part)
+
+        # ── Ratings / Reviews ───────────────────────────────────────────
+        rating_comments = [
+            'Отличная лекция, очень доступно объяснено!',
+            'Лектор прекрасно владеет материалом, рекомендую.',
+            'Было интересно, но хотелось бы больше практики.',
+            'Очень полезно, многое узнал нового.',
+            'Прекрасная подача материала, живо и понятно.',
+            'Немного затянуто, но содержательно.',
+            'Отличный спикер, задавал много вопросов аудитории.',
+            'Хорошая лекция, приду ещё раз.',
+            'Материал актуальный, лектор энергичный.',
+            'Всё понравилось, спасибо организаторам!',
+            'Было немного скучновато, ожидал больше интерактива.',
+            'Очень компетентный лектор, чётко и по существу.',
+            'Узнал то, чего давно хотел узнать. Спасибо!',
+            'Хорошо структурированная лекция.',
+            'Лектор отвечал на все вопросы, молодец!',
+        ]
+
+        for event, tag_code in created_events:
+            if event.status not in {EventStatus.COMPLETED, EventStatus.CANCELLED}:
+                continue
+            # Visitors rate completed events
+            shuffled_visitors = visitors[:]
+            rng.shuffle(shuffled_visitors)
+            for visitor in shuffled_visitors[:rng.randint(3, min(8, len(shuffled_visitors)))]:
+                rating_val = rng.choices(
+                    [6, 7, 8, 9, 10],
+                    weights=[1, 2, 4, 5, 3],
+                )[0] if event.status == EventStatus.COMPLETED else rng.randint(1, 5)
+                LectureRating.objects.get_or_create(
+                    event=event,
+                    user=visitor,
                     defaults={
-                        'status': participation_status,
-                        'comment': 'Создано seed-командой',
+                        'rating': rating_val,
+                        'comment': rng.choice(rating_comments),
                     },
                 )
-                if participation_status in {ParticipationStatus.ACCEPTED, ParticipationStatus.ATTENDED} and not participation.accepted_at:
-                    participation.accepted_at = event.date_start - timedelta(days=1)
-                if participation_status != ParticipationStatus.PENDING and not participation.responded_at:
-                    participation.responded_at = event.date_start - timedelta(days=1)
-                participation.save()
 
-        # Demo tags
-        tags_data = [
-            (TagType.SUBJECT, 'english', 'Английский язык'),
-            (TagType.SUBJECT, 'it', 'Информационные технологии'),
-            (TagType.SUBJECT, 'finance', 'Финансы'),
-            (TagType.SUBJECT, 'ecology', 'Экология'),
-            (TagType.EXPERIENCE, 'beginner', 'Для начинающих'),
-            (TagType.EXPERIENCE, 'intermediate', 'Средний уровень'),
-            (TagType.EXPERIENCE, 'expert', 'Для экспертов'),
-            (TagType.DURATION, '30min', '30 минут'),
-            (TagType.DURATION, '1h', '1 час'),
-            (TagType.DURATION, '2h', '2 часа'),
-            (TagType.TIME_SLOT, 'morning', 'Утро'),
-            (TagType.TIME_SLOT, 'afternoon', 'День'),
-            (TagType.TIME_SLOT, 'evening', 'Вечер'),
+        # ── Recalculate volunteer avg_rating ───────────────────────────
+        for volunteer in volunteers:
+            participated_events = EventParticipation.objects.filter(
+                user=volunteer,
+                status=ParticipationStatus.ATTENDED,
+            ).values_list('event_id', flat=True)
+            ratings = LectureRating.objects.filter(event_id__in=participated_events)
+            if ratings.exists():
+                avg = sum(r.rating for r in ratings) / ratings.count()
+                volunteer.avg_rating = round(avg, 2)
+                volunteer.has_permit = avg >= 7.0
+            else:
+                volunteer.avg_rating = round(rng.uniform(5.5, 9.5), 2)
+                volunteer.has_permit = volunteer.avg_rating >= 7.0
+            volunteer.save(update_fields=['avg_rating', 'has_permit'])
+
+        # ── Volunteer Applications ──────────────────────────────────────
+        app_specializations = [
+            'Математика и физика', 'Английский язык', 'Программирование',
+            'Биология и химия', 'История и обществознание', 'Психология',
+            'Финансовая грамотность', 'Экология', 'Медицина и здоровье',
         ]
-        for tag_type, code, title in tags_data:
-            Tag.objects.get_or_create(code=code, defaults={'title': title, 'tag_type': tag_type})
+        app_experiences = [
+            'Провёл более 20 лекций в школах города. Имею опыт работы с аудиторией разного возраста.',
+            'Кандидат наук, работаю педагогом 5 лет. Готов делиться знаниями.',
+            'Преподаю в университете, хочу расширить охват аудитории через волонтёрство.',
+            'Прошёл специализированные курсы, есть сертификаты. Хочу помогать людям учиться.',
+            'Работаю в IT-сфере, умею объяснять сложные вещи простым языком.',
+            'Freelance-консультант, готов проводить практические мастер-классы.',
+        ]
+        app_statuses = [
+            VolunteerApplicationStatus.PENDING,
+            VolunteerApplicationStatus.PENDING,
+            VolunteerApplicationStatus.APPROVED,
+            VolunteerApplicationStatus.APPROVED,
+            VolunteerApplicationStatus.REJECTED,
+        ]
+        for i, visitor in enumerate(visitors):
+            VolunteerApplication.objects.get_or_create(
+                user=visitor,
+                defaults={
+                    'specialization': rng.choice(app_specializations),
+                    'experience': rng.choice(app_experiences),
+                    'about': f'Хочу внести вклад в образование и помочь людям получить новые знания. '
+                             f'Готов участвовать в мероприятиях на регулярной основе.',
+                    'status': app_statuses[i % len(app_statuses)],
+                    'reviewed_by': admin_user if app_statuses[i % len(app_statuses)] != VolunteerApplicationStatus.PENDING else None,
+                },
+            )
 
-        self.stdout.write(self.style.SUCCESS('Demo data created/updated.'))
-        self.stdout.write('Users:')
-        self.stdout.write('  admin / admin12345      (superuser)')
-        self.stdout.write('  manager / manager123    (admin)')
-        self.stdout.write('  coord1 / coord123456    (coordinator, has_permit)')
-        self.stdout.write('  volunteer1 / vol123456  (volunteer)')
-        self.stdout.write('  user1 / user12345       (user/visitor)')
+        # ── Complaints ──────────────────────────────────────────────────
+        complaint_texts = [
+            'Лектор опоздал на 20 минут и не предупредил организаторов.',
+            'Материал был не подготовлен, лекция прошла хаотично.',
+            'Волонтёр общался грубо с участниками мероприятия.',
+            'Лектор не ответил ни на один вопрос из аудитории.',
+            'Презентация была взята из интернета без изменений, без собственного контента.',
+            'Волонтёр не пришёл на мероприятие и не предупредил заранее.',
+            'Лекция была прочитана слишком быстро, аудитория не успевала воспринимать.',
+            'Несоответствие заявленной темы реальному содержанию лекции.',
+        ]
+        complaint_statuses = [
+            ComplaintStatus.PENDING,
+            ComplaintStatus.PENDING,
+            ComplaintStatus.PENDING,
+            ComplaintStatus.ACCEPTED,
+            ComplaintStatus.ACCEPTED,
+            ComplaintStatus.REJECTED,
+        ]
+        completed_events = [e for e, _ in created_events if e.status == EventStatus.COMPLETED]
+        for i, visitor in enumerate(visitors[:8]):
+            target_volunteer = volunteers[i % len(volunteers)]
+            event_for_complaint = completed_events[i % len(completed_events)] if completed_events else None
+            Complaint.objects.get_or_create(
+                reporter=visitor,
+                volunteer=target_volunteer,
+                event=event_for_complaint,
+                defaults={
+                    'text': complaint_texts[i % len(complaint_texts)],
+                    'status': complaint_statuses[i % len(complaint_statuses)],
+                },
+            )
+
+        self.stdout.write(self.style.SUCCESS('Demo data created/updated successfully!'))
+        self.stdout.write('')
+        self.stdout.write('Accounts:')
+        self.stdout.write('  admin      / admin12345    (superuser)')
+        self.stdout.write('  manager    / manager123    (admin)')
+        self.stdout.write('  coord1     / coord123456   (coordinator)')
+        self.stdout.write('  volunteer1 / vol123456     (volunteer)')
+        self.stdout.write('  user1      / user12345     (user/visitor)')
+        self.stdout.write('')
+        self.stdout.write(f'Events:    {len(created_events)}')
+        self.stdout.write(f'Ratings:   {LectureRating.objects.count()}')
+        self.stdout.write(f'Complaints:{Complaint.objects.count()}')
+        self.stdout.write(f'Applications:{VolunteerApplication.objects.count()}')
