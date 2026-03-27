@@ -225,7 +225,7 @@ const EventsTab = () => {
                   ev.status === 'completed' ? 'bg-green-100 text-green-800' :
                   ev.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                   'bg-yellow-100 text-yellow-800'
-                }">
+                }`}>
                   {ev.status === 'planned' ? 'Запланировано' :
                    ev.status === 'completed' ? 'Завершено' :
                    ev.status === 'cancelled' ? 'Отменено' : ev.status}
