@@ -33,7 +33,7 @@
 }
 
 .glass-card:hover {
-  border-color: #3a3f58;
+  border-color: var(--border-primary, var(--border));
   background: var(--bg-card-hover);
 }
 
@@ -70,8 +70,8 @@
 
 .btn-ios:hover {
   background: var(--bg-card-hover);
-  border-color: #3a3f58;
-  color: #fff;
+  border-color: var(--border-primary, var(--border));
+  color: var(--text-primary);
 }
 
 .btn-ios:focus-visible {

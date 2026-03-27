@@ -90,3 +90,6 @@ export const rejectComplaint = (id) => api.post(`/api/v1/complaints/${id}/reject
 export const grantPermit = (userId) => api.post(`/api/v1/users/${userId}/grant_permit/`)
 export const revokePermit = (userId) => api.post(`/api/v1/users/${userId}/revoke_permit/`)
 export const grantAdminka = (userId) => api.post(`/api/v1/users/${userId}/grant_adminka/`)
+
+// ---- Lecture applicants (for volunteer author) ----
+export const getLectureApplicants = (lectureId) => api.get(`/api/v1/my/lectures/${lectureId}/applicants/`)

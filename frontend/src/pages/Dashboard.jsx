@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
-import { getTags, createMaterial } from '../services/api'
+import { getTags, createMaterial, getLectureApplicants } from '../services/api'
 import ChatWidget from '../components/ChatWidget'
 import RatingLeaderboard from '../components/RatingLeaderboard'
 import GlassCard from '../components/ui/GlassCard'
@@ -145,20 +145,65 @@ const TagSelector = ({ selected, customTags, onChange, onCustomTagsChange }) => 
 // ──────────────────────────────────────────────
 // My Lectures Tab
 // ──────────────────────────────────────────────
+const STATUS_LABELS = {
+  pending:   { label: 'Ожидает',     cls: 'bg-yellow-500/15 text-yellow-700' },
+  accepted:  { label: 'Принято',     cls: 'bg-green-500/15 text-green-700' },
+  attended:  { label: 'Пришёл',      cls: 'bg-blue-500/15 text-blue-700' },
+  declined:  { label: 'Отказ',       cls: 'bg-red-500/15 text-red-700' },
+  absent:    { label: 'Не пришёл',   cls: 'bg-orange-500/15 text-orange-700' },
+  cancelled: { label: 'Отменено',    cls: 'bg-gray-200 text-gray-600' },
+}
+
+const ApplicantsList = ({ eventId }) => {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getLectureApplicants(eventId)
+      .then((res) => setData(res.data))
+      .catch(() => setData([]))
+      .finally(() => setLoading(false))
+  }, [eventId])
+
+  if (loading) return <p className="text-xs glass-subtitle py-2">Загрузка...</p>
+  if (!data?.length) return <p className="text-xs glass-subtitle py-2">Заявок пока нет</p>
+
+  return (
+    <div className="mt-2 space-y-1.5">
+      {data.map((p) => {
+        const s = STATUS_LABELS[p.status] || { label: p.status, cls: 'bg-gray-200 text-gray-600' }
+        return (
+          <div key={p.id} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg" style={{ background: 'var(--bg-app)' }}>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ background: 'var(--accent-dim)', color: 'var(--accent-hover)' }}>
+                {(p.user?.full_name || p.user?.username || '?')[0].toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium glass-title truncate">{p.user?.full_name || p.user?.username}</p>
+                {p.comment && <p className="text-xs glass-subtitle truncate">{p.comment}</p>}
+              </div>
+            </div>
+            <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${s.cls}`}>{s.label}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 const MyLecturesTab = () => {
   const [participations, setParticipations] = useState([])
   const [createdEvents, setCreatedEvents] = useState([])
   const [loading, setLoading] = useState(true)
+  const [expandedId, setExpandedId] = useState(null)
 
   useEffect(() => {
     api.get('/api/v1/my/events/')
       .then((res) => {
-        // new response shape: { participations: [...], created: [...] }
         if (res.data.participations !== undefined) {
           setParticipations(res.data.participations)
           setCreatedEvents(res.data.created)
         } else {
-          // fallback: old flat array format
           setParticipations(res.data.results || res.data)
         }
       })
@@ -181,32 +226,52 @@ const MyLecturesTab = () => {
         <div>
           <p className="text-xs font-semibold glass-subtitle uppercase tracking-wide mb-2">Созданные мной</p>
           <div className="space-y-3">
-            {createdEvents.map((ev) => (
-              <GlassCard key={`c_${ev.id}`} className="p-4">
-                <div className="flex justify-between items-start gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold glass-title truncate">{ev.title}</p>
-                    <p className="text-xs glass-subtitle mt-0.5">{ev.event_type?.title}</p>
-                    <p className="text-xs glass-subtitle mt-0.5">
-                      {ev.date_start
-                        ? new Date(ev.date_start).toLocaleDateString('ru', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
-                        : '—'}
-                    </p>
+            {createdEvents.map((ev) => {
+              const isOpen = expandedId === ev.id
+              return (
+                <GlassCard key={`c_${ev.id}`} className="p-4">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold glass-title truncate">{ev.title}</p>
+                      <p className="text-xs glass-subtitle mt-0.5">{ev.event_type?.title}</p>
+                      <p className="text-xs glass-subtitle mt-0.5">
+                        {ev.date_start
+                          ? new Date(ev.date_start).toLocaleDateString('ru', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+                          : '—'}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                        ev.status === 'planned'   ? 'bg-yellow-100 text-yellow-800' :
+                        ev.status === 'ongoing'   ? 'bg-blue-100 text-blue-800' :
+                        ev.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {ev.status === 'planned'   ? 'Запланировано' :
+                         ev.status === 'ongoing'   ? 'Идёт' :
+                         ev.status === 'completed' ? 'Завершено' :
+                         ev.status === 'cancelled' ? 'Отменено' : ev.status}
+                      </span>
+                      <button
+                        onClick={() => setExpandedId(isOpen ? null : ev.id)}
+                        className="btn-ios text-xs px-3 py-1 flex items-center gap-1.5"
+                        style={isOpen ? { borderColor: 'var(--accent)', color: 'var(--accent-hover)' } : {}}
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        Заявки
+                        <span className="ml-0.5">{isOpen ? '▲' : '▼'}</span>
+                      </button>
+                    </div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                    ev.status === 'planned'   ? 'bg-yellow-100 text-yellow-800' :
-                    ev.status === 'ongoing'   ? 'bg-blue-100 text-blue-800' :
-                    ev.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                    {ev.status === 'planned'   ? 'Запланировано' :
-                     ev.status === 'ongoing'   ? 'Идёт' :
-                     ev.status === 'completed' ? 'Завершено' :
-                     ev.status === 'cancelled' ? 'Отменено' : ev.status}
-                  </span>
-                </div>
-              </GlassCard>
-            ))}
+                  {isOpen && (
+                    <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border)' }}>
+                      <p className="text-xs font-semibold glass-subtitle uppercase tracking-wide mb-1">Подавшие заявку</p>
+                      <ApplicantsList eventId={ev.id} />
+                    </div>
+                  )}
+                </GlassCard>
+              )
+            })}
           </div>
         </div>
       )}

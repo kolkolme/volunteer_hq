@@ -398,6 +398,19 @@ class LectureMaterialViewSet(viewsets.ModelViewSet):
             qs = qs.filter(event__participations__user=user).distinct()
         return qs
 
+
+class MyLectureApplicantsView(APIView):
+    """Returns participations for a lecture created by the current user."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        event = get_object_or_404(Event, pk=pk)
+        if event.created_by_id != request.user.pk and request.user.role.code not in {'admin', 'superuser', 'coordinator'}:
+            raise PermissionDenied('Вы не являетесь автором этой лекции.')
+        participations = EventParticipation.objects.filter(event=event).select_related('user', 'user__role').order_by('-created_at')
+        serializer = EventParticipationSerializer(participations, many=True)
+        return Response(serializer.data)
+
     def get_permissions(self):
         if self.action in {'list', 'retrieve'}:
             return [IsAuthenticated()]
