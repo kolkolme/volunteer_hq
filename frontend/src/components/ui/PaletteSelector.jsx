@@ -10,9 +10,14 @@ const PALETTES = [
 
 export { PALETTES }
 
+const DARK_PALETTES = new Set(['black', 'beeline'])
+
 export function applyPalette(paletteId) {
+  const theme = DARK_PALETTES.has(paletteId) ? 'dark' : 'light'
   document.documentElement.setAttribute('data-palette', paletteId)
+  document.documentElement.setAttribute('data-theme', theme)
   localStorage.setItem('palette', paletteId)
+  localStorage.setItem('theme', theme)
   window.dispatchEvent(new CustomEvent('paletteChanged', { detail: { palette: paletteId } }))
 }
 

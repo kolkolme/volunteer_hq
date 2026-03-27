@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import api from '../services/api'
-import { Calendar, CheckCircle, XCircle, Clock, Palette } from 'lucide-react'
-import { PaletteGrid } from '../components/ui/PaletteSelector'
+import { Calendar, CheckCircle, XCircle, Clock } from 'lucide-react'
 
 const Profile = () => {
   const { user } = useAuth()
@@ -102,15 +101,6 @@ const Profile = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Appearance Settings */}
-      <div className="glass-card rounded-2xl p-5 sm:p-6">
-        <h3 className="text-base font-semibold glass-title mb-4 flex items-center gap-2">
-          <Palette className="h-4 w-4" />
-          Цветовая тема
-        </h3>
-        <PaletteGrid />
       </div>
 
       {/* My Participations */}

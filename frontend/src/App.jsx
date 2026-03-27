@@ -19,12 +19,11 @@ function App() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // Set default light theme
-    document.documentElement.setAttribute('data-theme', 'light')
-
-    // Initialize palette from localStorage or default to white
+    // Restore palette and theme from localStorage
     const savedPalette = localStorage.getItem('palette') || 'white'
+    const savedTheme = localStorage.getItem('theme') || 'light'
     document.documentElement.setAttribute('data-palette', savedPalette)
+    document.documentElement.setAttribute('data-theme', savedTheme)
   }, [])
 
   return (

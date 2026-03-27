@@ -1,6 +1,6 @@
 const GlassInput = ({ className = '', onChange, ...props }) => {
   return <input 
-    className={`glass-input border rounded p-2 ${className}`} 
+    className={`glass-input ${className}`} 
     onChange={onChange}
     {...props} 
   />

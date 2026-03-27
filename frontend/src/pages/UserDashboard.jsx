@@ -23,6 +23,7 @@ import GlassInput from '../components/ui/GlassInput'
 import IosButton from '../components/ui/IosButton'
 import RatingLeaderboard from '../components/RatingLeaderboard'
 import MobileBottomNav from '../components/ui/MobileBottomNav'
+import { PaletteGrid } from '../components/ui/PaletteSelector'
 
 const TAGS = [
   'Английский', 'Математика', 'Программирование', 'Финансы', 'Кибербезопасность',
@@ -36,12 +37,6 @@ const TAB_ITEMS = [
   { id: 'rating',     label: 'Рейтинг',         short: 'Рейтинг',  icon: Trophy },
   { id: 'chats',      label: 'Чаты',            short: 'Чаты',     icon: MessageSquare },
   { id: 'appearance', label: 'Настройки',       short: 'Вид',      icon: Settings },
-]
-
-const APPEARANCE_OPTIONS = [
-  { id: 'light', label: 'Светлая', palette: 'white', theme: 'light' },
-  { id: 'dark', label: 'Тёмная', palette: 'black', theme: 'dark' },
-  { id: 'beige', label: 'Бежевая', palette: 'beige', theme: 'light' },
 ]
 
 
@@ -66,11 +61,6 @@ const UserDashboard = () => {
   // Ratings from API: { [eventId]: { id, rating, comment } }
   const [ratings, setRatings] = useState({})
   const ratingDebounceRef = useRef({})
-
-  const [appearanceId, setAppearanceId] = useState('light')
-  const [availableTags, setAvailableTags] = useState([])
-  const [appliedEventIds, setAppliedEventIds] = useState(new Set())
-  const [applyingId, setApplyingId] = useState(null)
 
   useEffect(() => {
     fetchData()
@@ -248,7 +238,7 @@ const UserDashboard = () => {
     document.documentElement.setAttribute('data-palette', option.palette)
     document.documentElement.setAttribute('data-theme', option.theme)
     localStorage.setItem('palette', option.palette)
-    setAppearanceId(option.id)
+    localStorage.setItem('theme', option.theme)
     window.dispatchEvent(new CustomEvent('paletteChanged', { detail: { palette: option.palette } }))
   }
 
@@ -661,30 +651,8 @@ const UserDashboard = () => {
                 <Settings className="w-5 h-5 opacity-60" />
                 <h3 className="text-xl font-bold">Настройки внешнего вида</h3>
               </div>
-              <p className="text-sm opacity-70 mb-6">Выберите одну из трёх схем: тёмная, светлая или бежевая.</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {APPEARANCE_OPTIONS.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => applyAppearance(option)}
-                    className={`glass-card rounded-2xl p-5 text-left transition-all duration-200 ${appearanceId === option.id ? 'ring-2 ring-blue-400 shadow-lg' : 'hover:shadow-md'}`}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-semibold">{option.label}</span>
-                      {appearanceId === option.id && <span className="text-xs opacity-70">Активно</span>}
-                    </div>
-                    <div className="flex gap-2 mb-3">
-                      <span className={`w-6 h-6 rounded-full border ${option.id === 'light' ? 'bg-white' : option.id === 'dark' ? 'bg-black border-white/20' : 'bg-[#e8dccf]'}`}></span>
-                      <span className={`w-6 h-6 rounded-full border opacity-70 ${option.id === 'light' ? 'bg-slate-100' : option.id === 'dark' ? 'bg-zinc-700 border-white/20' : 'bg-[#d2bda9]'}`}></span>
-                    </div>
-                    <p className="text-sm opacity-60">
-                      {option.id === 'light' && 'Светлый режим для повседневной работы.'}
-                      {option.id === 'dark' && 'Тёмный режим с чёрной палитрой.'}
-                      {option.id === 'beige' && 'Мягкая бежевая палитра для спокойного чтения.'}
-                    </p>
-                  </button>
-                ))}
-              </div>
+              <p className="text-sm opacity-70 mb-6">Выберите цветовую тему интерфейса.</p>
+              <PaletteGrid />
             </div>
           )}
         </div>
