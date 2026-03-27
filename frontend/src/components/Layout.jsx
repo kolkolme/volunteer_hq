@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { User, LogOut, Users, BarChart3, Shield, BookOpen } from 'lucide-react'
-import PaletteSelector from './ui/PaletteSelector'
 
 const Layout = ({ children }) => {
   const { user, logout, isAdmin, isSuperuser, getRoleCode } = useAuth()
@@ -26,9 +25,6 @@ const Layout = ({ children }) => {
             </div>
 
             <div className="flex items-center space-x-2 sm:space-x-4">
-              {/* Palette Selector */}
-              <PaletteSelector />
-
               {/* User Menu */}
               <div className="flex items-center space-x-1 sm:space-x-3">
                 <div className="text-right hidden sm:block">

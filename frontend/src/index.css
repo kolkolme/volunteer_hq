@@ -132,6 +132,38 @@
   --scrollbar-thumb: rgba(140, 120, 100, 0.8);
 }
 
+/* ===== BEELINE PALETTE ===== */
+:root[data-palette="beeline"] {
+  --text-primary: #ffffff;
+  --text-secondary: #c8c8c8;
+  --bg-primary: linear-gradient(135deg, #0d0d0d, #141400, #1a1a00);
+  --bg-secondary: rgba(20, 20, 2, 0.97);
+  --glow-primary: rgba(255, 209, 0, 0.30);
+  --glow-secondary: rgba(255, 209, 0, 0.15);
+  --shadow-primary: 0 20px 60px rgba(255, 209, 0, 0.10);
+  --shadow-secondary: 0 10px 18px rgba(255, 209, 0, 0.06);
+  --border-primary: rgba(255, 209, 0, 0.28);
+  --card-bg: rgba(22, 22, 4, 0.93);
+  --input-bg: rgba(35, 35, 8, 0.65);
+  --scrollbar-thumb: rgba(255, 209, 0, 0.55);
+}
+
+/* ===== DARK THEME - BEELINE PALETTE ===== */
+[data-theme="dark"][data-palette="beeline"] {
+  --text-primary: #ffffff;
+  --text-secondary: #b8b8b8;
+  --bg-primary: linear-gradient(135deg, #000000, #0a0a00, #111100);
+  --bg-secondary: rgba(10, 10, 0, 0.99);
+  --glow-primary: rgba(255, 209, 0, 0.35);
+  --glow-secondary: rgba(255, 209, 0, 0.20);
+  --shadow-primary: 0 20px 60px rgba(255, 209, 0, 0.14);
+  --shadow-secondary: 0 10px 18px rgba(255, 209, 0, 0.09);
+  --border-primary: rgba(255, 209, 0, 0.32);
+  --card-bg: rgba(14, 14, 2, 0.97);
+  --input-bg: rgba(25, 25, 5, 0.70);
+  --scrollbar-thumb: rgba(255, 209, 0, 0.65);
+}
+
 html {
   overflow-x: hidden;
 }

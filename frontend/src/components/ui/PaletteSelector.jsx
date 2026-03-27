@@ -1,79 +1,67 @@
 import React, { useState, useEffect } from 'react'
-import { Palette } from 'lucide-react'
 
 const PALETTES = [
-  { id: 'white', name: 'Белая', icon: '⚪' },
-  { id: 'black', name: 'Чёрная', icon: '⚫' },
-  { id: 'gray', name: 'Серая', icon: '⚫' },
-  { id: 'beige', name: 'Бежевая', icon: '🟤' },
+  { id: 'white',   name: 'Белая',    icon: '⚪', desc: 'Светлая классика' },
+  { id: 'black',   name: 'Чёрная',   icon: '⚫', desc: 'Глубокий чёрный' },
+  { id: 'gray',    name: 'Серая',    icon: '🩶', desc: 'Нейтральная серая' },
+  { id: 'beige',   name: 'Бежевая',  icon: '🤎', desc: 'Тёплый бежевый' },
+  { id: 'beeline', name: 'Билайн',   icon: '🐝', desc: 'Чёрный & жёлтый' },
 ]
 
-export default function PaletteSelector() {
-  const [isOpen, setIsOpen] = useState(false)
+export { PALETTES }
+
+export function applyPalette(paletteId) {
+  document.documentElement.setAttribute('data-palette', paletteId)
+  localStorage.setItem('palette', paletteId)
+  window.dispatchEvent(new CustomEvent('paletteChanged', { detail: { palette: paletteId } }))
+}
+
+/** Inline grid of palette cards — use in settings/profile pages */
+export function PaletteGrid() {
   const [currentPalette, setCurrentPalette] = useState('white')
 
   useEffect(() => {
     const saved = localStorage.getItem('palette') || 'white'
     setCurrentPalette(saved)
-    applyPalette(saved)
   }, [])
 
-  const applyPalette = (paletteId) => {
-    document.documentElement.setAttribute('data-palette', paletteId)
-    localStorage.setItem('palette', paletteId)
-    setCurrentPalette(paletteId)
-    setIsOpen(false)
-
-    // Dispatch custom event for other components (like ThemeToggle) to listen
-    window.dispatchEvent(new CustomEvent('paletteChanged', { detail: { palette: paletteId } }))
+  const handleSelect = (id) => {
+    applyPalette(id)
+    setCurrentPalette(id)
   }
 
-  const currentPaletteData = PALETTES.find(p => p.id === currentPalette)
-
   return (
-    <>
-      {/* Trigger Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="btn-ios flex items-center gap-2 px-4 py-2 rounded-2xl"
-        title="Выбрать цветовую палитру"
-      >
-        <Palette size={18} />
-        <span className="text-sm font-medium hidden sm:inline">Палитра</span>
-      </button>
-
-      {/* Overlay - Click outside to close */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-9998 pointer-events-auto"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Dropdown Menu - Renders above overlay */}
-      {isOpen && (
-        <div className="fixed top-20 right-4 glass-panel rounded-3xl shadow-2xl p-3 z-9999 min-w-48 backdrop-blur-lg pointer-events-auto">
-          <div className="space-y-2">
-            {PALETTES.map((palette) => (
-              <button
-                key={palette.id}
-                onClick={() => applyPalette(palette.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
-                  currentPalette === palette.id
-                    ? 'bg-glass-card border border-glow-primary shadow-md'
-                    : 'hover:bg-glass-card hover:shadow-sm'
-                }`}
-              >
-                <span className="text-lg">{palette.icon}</span>
-                <span className="text-sm font-medium">{palette.name}</span>
-                {currentPalette === palette.id && (
-                  <span className="ml-auto text-xs font-semibold opacity-70">✓</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </>
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      {PALETTES.map((palette) => {
+        const isActive = currentPalette === palette.id
+        return (
+          <button
+            key={palette.id}
+            onClick={() => handleSelect(palette.id)}
+            className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all text-left ${
+              isActive
+                ? 'ring-2 ring-indigo-500/70 glass-card shadow-lg'
+                : 'glass-card hover:opacity-80'
+            }`}
+          >
+            <span className="text-2xl shrink-0">{palette.icon}</span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold glass-title leading-tight">{palette.name}</p>
+              <p className="text-xs glass-subtitle opacity-50 leading-tight truncate">{palette.desc}</p>
+            </div>
+            {isActive && (
+              <span className="ml-auto shrink-0 w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
+                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 10 10"><path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </span>
+            )}
+          </button>
+        )
+      })}
+    </div>
   )
 }
+
+export default function PaletteSelector() {
+  return null
+}
+
