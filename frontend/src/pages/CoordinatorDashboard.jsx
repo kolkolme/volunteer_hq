@@ -183,7 +183,7 @@ const EventsTab = () => {
           <form className="space-y-3" onSubmit={handleCreate}>
             <GlassInput placeholder="Название" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className="w-full" />
             <GlassInput placeholder="Описание" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full" />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="text-xs glass-subtitle mb-1 block">Начало</label>
                 <GlassInput type="datetime-local" value={form.date_start} onChange={(e) => setForm({ ...form, date_start: e.target.value })} required className="w-full" />
@@ -214,18 +214,22 @@ const EventsTab = () => {
         <div className="space-y-3">
           {events.slice(0, 20).map((ev) => (
             <GlassCard key={ev.id} className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-medium glass-title">{ev.title}</p>
+              <div className="flex justify-between items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium glass-title truncate">{ev.title}</p>
                   <p className="text-xs glass-subtitle">{ev.event_type?.title}</p>
                   <p className="text-xs glass-subtitle">{new Date(ev.date_start).toLocaleDateString('ru')}</p>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${
                   ev.status === 'planned' ? 'bg-blue-100 text-blue-800' :
                   ev.status === 'completed' ? 'bg-green-100 text-green-800' :
                   ev.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                   'bg-yellow-100 text-yellow-800'
-                }`}>{ev.status}</span>
+                }">
+                  {ev.status === 'planned' ? 'Запланировано' :
+                   ev.status === 'completed' ? 'Завершено' :
+                   ev.status === 'cancelled' ? 'Отменено' : ev.status}
+                </span>
               </div>
             </GlassCard>
           ))}
@@ -249,17 +253,17 @@ const CoordinatorDashboard = () => {
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20 lg:pb-6">
       {/* Header */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-4 sm:p-6">
         <div className="flex items-center gap-4">
           {user?.photo_url && (
-            <img src={user.photo_url} alt="" className="w-16 h-16 rounded-2xl object-cover" />
+            <img src={user.photo_url} alt="" className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover shrink-0" />
           )}
-          <div>
-            <h1 className="text-2xl font-bold glass-title">Привет, {user?.first_name || user?.username}!</h1>
-            <p className="glass-subtitle text-sm mt-1">
-              Координатор · Рейтинг: {user?.avg_rating?.toFixed(1) ?? '—'}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold glass-title truncate">Привет, {user?.first_name || user?.username}!</h1>
+            <p className="glass-subtitle text-sm mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>Координатор · Рейтинг: {user?.avg_rating?.toFixed(1) ?? '—'}</span>
               {user?.has_permit && (
-                <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
+                <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
                   Разрешение выдано
                 </span>
               )}
