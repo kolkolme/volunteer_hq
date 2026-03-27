@@ -206,7 +206,7 @@ const OverviewTab = ({ onNavigate }) => {
             <Empty text="Нет данных для графика" />
           ) : (
             <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={activity} barSize={28} margin={{ left: -10 }}>
+              <BarChart data={activity} barSize={28} margin={{ left: 0, right: 5, top: 5, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(150,150,150,0.15)" />
                 <XAxis dataKey="event_type" tick={{ fontSize: 11, fill: 'var(--text-secondary, #888)' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: 'var(--text-secondary, #888)' }} axisLine={false} tickLine={false} />
@@ -1087,7 +1087,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview')
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 pb-20 lg:pb-6">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 pb-20 lg:pb-6 overflow-x-hidden">
       {/* Header — matches user Dashboard style */}
       <GlassCard className="p-4 sm:p-6">
         <div className="flex items-center gap-4">
