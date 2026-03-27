@@ -58,6 +58,11 @@ const UserDashboard = () => {
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileMessage, setProfileMessage] = useState('')
 
+  // Tags and event application state
+  const [availableTags, setAvailableTags] = useState([])
+  const [appliedEventIds, setAppliedEventIds] = useState(new Set())
+  const [applyingId, setApplyingId] = useState(null)
+
   // Ratings from API: { [eventId]: { id, rating, comment } }
   const [ratings, setRatings] = useState({})
   const ratingDebounceRef = useRef({})
@@ -226,14 +231,6 @@ const UserDashboard = () => {
       }
     }, 1000)
   }, [ratings])
-
-  const applyAppearance = (option) => {
-    document.documentElement.setAttribute('data-palette', option.palette)
-    document.documentElement.setAttribute('data-theme', option.theme)
-    localStorage.setItem('palette', option.palette)
-    localStorage.setItem('theme', option.theme)
-    window.dispatchEvent(new CustomEvent('paletteChanged', { detail: { palette: option.palette } }))
-  }
 
   if (loading) {
     return (
