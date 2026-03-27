@@ -7,7 +7,6 @@ import {
   Calendar,
   Clock,
   Download,
-  ImagePlus,
   MapPin,
   MessageSquare,
   Save,
@@ -35,7 +34,6 @@ const TAB_ITEMS = [
   { id: 'lectures',   label: 'Лекции',          short: 'Лекции',   icon: Calendar },
   { id: 'history',    label: 'Прош. лекции',    short: 'История',  icon: BookOpen },
   { id: 'rating',     label: 'Рейтинг',         short: 'Рейтинг',  icon: Trophy },
-  { id: 'volunteer',  label: 'Стать волонтёром', short: 'Волонтёр', icon: UserCheck },
   { id: 'chats',      label: 'Чаты',            short: 'Чаты',     icon: MessageSquare },
   { id: 'appearance', label: 'Настройки',       short: 'Вид',      icon: Settings },
 ]
@@ -69,17 +67,6 @@ const UserDashboard = () => {
   const [ratings, setRatings] = useState({})
   const ratingDebounceRef = useRef({})
 
-  // Volunteer application
-  const [volunteerApplication, setVolunteerApplication] = useState(null)
-  const [volunteerForm, setVolunteerForm] = useState({
-    photo_url: '',
-    specialization: '',
-    experience: '',
-    about: '',
-  })
-  const [volunteerSubmitting, setVolunteerSubmitting] = useState(false)
-  const [volunteerMessage, setVolunteerMessage] = useState('')
-
   const [appearanceId, setAppearanceId] = useState('light')
   const [availableTags, setAvailableTags] = useState([])
   const [appliedEventIds, setAppliedEventIds] = useState(new Set())
@@ -109,18 +96,16 @@ const UserDashboard = () => {
   const fetchData = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]
-      const [eventsRes, participationsRes, ratingsRes, appRes, tagsRes] = await Promise.all([
+      const [eventsRes, participationsRes, ratingsRes, tagsRes] = await Promise.all([
         api.get(`/api/v1/events/?status=planned&date_from=${today}&ordering=date_start&page_size=100`),
         api.get('/api/v1/my/participations/'),
         api.get('/api/v1/my/ratings/'),
-        api.get('/api/v1/volunteer-applications/'),
         api.get('/api/v1/tags/'),
       ])
 
       const allEvents = eventsRes.data.results || eventsRes.data
       const participations = participationsRes.data.results || participationsRes.data
       const ratingsData = ratingsRes.data.results || ratingsRes.data
-      const applicationsData = appRes.data.results || appRes.data
       const tagsData = tagsRes.data.results || tagsRes.data
 
       const now = new Date()
@@ -144,17 +129,6 @@ const UserDashboard = () => {
       setRatings(ratingsMap)
       setAvailableTags(Array.isArray(tagsData) ? tagsData : [])
       setAppliedEventIds(new Set(participations.map(p => p.event?.id ?? p.event)))
-
-      if (applicationsData.length > 0) {
-        const latest = applicationsData[0]
-        setVolunteerApplication(latest)
-        setVolunteerForm({
-          photo_url: latest.photo_url || '',
-          specialization: latest.specialization || '',
-          experience: latest.experience || '',
-          about: latest.about || '',
-        })
-      }
     } catch (error) {
       console.error('Failed to fetch data:', error)
     } finally {
@@ -270,29 +244,6 @@ const UserDashboard = () => {
     }, 1000)
   }, [ratings])
 
-  const handleVolunteerChange = (e) => {
-    setVolunteerForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }))
-  }
-
-  const handleVolunteerSubmit = async (e) => {
-    e.preventDefault()
-    setVolunteerSubmitting(true)
-    setVolunteerMessage('')
-    try {
-      const res = await api.post('/api/v1/volunteer-applications/', volunteerForm)
-      setVolunteerApplication(res.data)
-      setVolunteerMessage('Заявка отправлена! Ожидайте рассмотрения администратором.')
-    } catch (err) {
-      const detail = err.response?.data?.detail || 'Не удалось отправить заявку.'
-      setVolunteerMessage(detail)
-    } finally {
-      setVolunteerSubmitting(false)
-    }
-  }
-
   const applyAppearance = (option) => {
     document.documentElement.setAttribute('data-palette', option.palette)
     document.documentElement.setAttribute('data-theme', option.theme)
@@ -326,12 +277,11 @@ const UserDashboard = () => {
           </h1>
           <p className="text-lg opacity-80 mb-6 max-w-2xl">
             Вы вошли как <span className="font-semibold text-blue-600">Посетитель</span>.
-            Управляйте профилем, прошлыми лекциями, заявкой в волонтёры и внешним видом кабинета.
+            Управляйте профилем, лекциями, историей посещений и внешним видом кабинета.
           </p>
           <div className="flex flex-wrap gap-2 text-xs sm:text-sm opacity-75">
-            <span className="glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl">4 вкладки для visitor-flow</span>
             <span className="glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl">История лекций и обратная связь</span>
-            <span className="glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl">Заявка в волонтёры</span>
+            <span className="glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl">Рейтинг и чаты</span>
           </div>
         </div>
       </div>
@@ -694,82 +644,6 @@ const UserDashboard = () => {
                   )}
                 </div>
               </div>
-            </div>
-          )}
-
-          {activeTab === 'volunteer' && (
-            <div className="glass-card rounded-2xl p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <UserCheck className="w-5 h-5 opacity-60" />
-                <h3 className="text-xl font-bold">Стать волонтёром</h3>
-              </div>
-              <p className="text-sm opacity-70 mb-6 max-w-2xl">
-                Добавьте минимум фото, специализацию и краткую информацию о себе. После этого заявка будет готова к перерегистрации аккаунта в роль волонтёра.
-              </p>
-
-              <form className="space-y-4" onSubmit={handleVolunteerSubmit}>
-                <div>
-                  <label className="block text-sm font-medium glass-subtitle mb-2">Фото или ссылка на фото</label>
-                  <div className="relative">
-                    <ImagePlus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-40" />
-                    <GlassInput
-                      name="photo_url"
-                      value={volunteerForm.photo_url}
-                      onChange={handleVolunteerChange}
-                      className="pl-10"
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium glass-subtitle mb-2">Специализация</label>
-                    <GlassInput
-                      name="specialization"
-                      value={volunteerForm.specialization}
-                      onChange={handleVolunteerChange}
-                      placeholder="Например, английский / IT / финансы"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium glass-subtitle mb-2">Опыт</label>
-                    <GlassInput
-                      name="experience"
-                      value={volunteerForm.experience}
-                      onChange={handleVolunteerChange}
-                      placeholder="Стаж, кейсы, лекции"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium glass-subtitle mb-2">О себе</label>
-                  <textarea
-                    name="about"
-                    value={volunteerForm.about}
-                    onChange={handleVolunteerChange}
-                    className="glass-input border rounded-2xl p-3 min-h-32"
-                    placeholder="Коротко расскажите, какие лекции вы хотите проводить"
-                  />
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <IosButton type="submit" disabled={volunteerSubmitting || volunteerApplication?.status === 'pending'} className="inline-flex gap-2">
-                    <UserCheck className="w-4 h-4" />
-                    {volunteerSubmitting ? 'Отправка...' : volunteerApplication ? 'Заявка подана' : 'Подать заявку'}
-                  </IosButton>
-                  {volunteerApplication && (
-                    <span className={`text-sm font-medium px-3 py-1 rounded-full ${
-                      volunteerApplication.status === 'approved' ? 'bg-green-100 text-green-700' :
-                      volunteerApplication.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                      'bg-yellow-100 text-yellow-700'
-                    }`}>
-                      {volunteerApplication.status === 'approved' && '✅ Одобрено'}
-                      {volunteerApplication.status === 'rejected' && '❌ Отклонено'}
-                      {volunteerApplication.status === 'pending' && '⏳ На рассмотрении'}
-                    </span>
-                  )}
-                  {volunteerMessage && <p className="text-sm opacity-70">{volunteerMessage}</p>}
-                </div>
-              </form>
             </div>
           )}
 

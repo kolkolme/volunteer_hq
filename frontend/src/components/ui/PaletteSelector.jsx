@@ -23,6 +23,7 @@ export function PaletteGrid() {
   useEffect(() => {
     const saved = localStorage.getItem('palette') || 'white'
     setCurrentPalette(saved)
+    applyPalette(saved)
   }, [])
 
   const handleSelect = (id) => {

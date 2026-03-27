@@ -316,7 +316,6 @@ const EventAssignment = () => {
                 </div>
               )
             })}
-            }
           </div>
         ) : null}
       </div>

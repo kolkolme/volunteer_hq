@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { MessageSquare, PenSquare, Search, Send, X } from 'lucide-react'
+import { ArrowLeft, MessageSquare, PenSquare, Search, Send, X } from 'lucide-react'
 import { getChats, createChat, getMessages, sendMessage, markMessagesRead, searchChatUsers } from '../services/api'
 import GlassInput from './ui/GlassInput'
 
@@ -142,7 +142,7 @@ const ChatWidget = ({ user, color = 'blue', height = 'h-[480px]' }) => {
 
       <div className={`flex ${height}`}>
         {/* ── Sidebar ──────────────────────────────────────────────── */}
-        <div className="w-64 shrink-0 border-r border-white/10 flex flex-col">
+        <div className={`${activeRoom ? 'hidden lg:flex' : 'flex'} flex-col w-full lg:w-64 shrink-0 border-r border-white/10`}>
           {/* New-chat search panel */}
           {showSearch && (
             <div className="p-3 border-b border-white/10 space-y-2">
@@ -206,7 +206,7 @@ const ChatWidget = ({ user, color = 'blue', height = 'h-[480px]' }) => {
         </div>
 
         {/* ── Chat area ────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={`${activeRoom ? 'flex' : 'hidden lg:flex'} flex-1 flex-col min-w-0`}>
           {!activeRoom ? (
             <div className="flex-1 flex flex-col items-center justify-center opacity-50 text-sm gap-2">
               <MessageSquare className="w-10 h-10 opacity-30" />
@@ -215,6 +215,13 @@ const ChatWidget = ({ user, color = 'blue', height = 'h-[480px]' }) => {
           ) : (
             <>
               <div className="p-3 border-b border-white/10 flex items-center gap-2">
+                <button
+                  onClick={() => setActiveRoom(null)}
+                  className="lg:hidden p-1.5 rounded-lg glass-card hover:opacity-80 shrink-0 mr-1"
+                  title="Назад"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
                 <div className={`w-8 h-8 rounded-full ${accentBg} text-white text-xs flex items-center justify-center font-bold shrink-0`}>
                   {(activeRoom.participants?.find(p => p.id !== user?.id)?.full_name || '?').slice(0, 1).toUpperCase()}
                 </div>
