@@ -408,15 +408,5 @@ class MyLectureApplicantsView(APIView):
         if event.created_by_id != request.user.pk and request.user.role.code not in {'admin', 'superuser', 'coordinator'}:
             raise PermissionDenied('Вы не являетесь автором этой лекции.')
         participations = EventParticipation.objects.filter(event=event).select_related('user', 'user__role').order_by('-created_at')
-        serializer = EventParticipationSerializer(participations, many=True)
+        serializer = EventParticipationSerializer(participations, many=True, context={'request': request})
         return Response(serializer.data)
-
-    def get_permissions(self):
-        if self.action in {'list', 'retrieve'}:
-            return [IsAuthenticated()]
-        return [IsCoordinatorOrAbove()]
-
-    def get_serializer_context(self):
-        ctx = super().get_serializer_context()
-        ctx['request'] = self.request
-        return ctx

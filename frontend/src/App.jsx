@@ -20,8 +20,8 @@ function App() {
 
   useEffect(() => {
     // Restore palette and theme from localStorage
-    const savedPalette = localStorage.getItem('palette') || 'white'
-    const savedTheme = localStorage.getItem('theme') || 'light'
+    const savedPalette = localStorage.getItem('palette') || 'beeline'
+    const savedTheme = localStorage.getItem('theme') || 'dark'
     document.documentElement.setAttribute('data-palette', savedPalette)
     document.documentElement.setAttribute('data-theme', savedTheme)
   }, [])

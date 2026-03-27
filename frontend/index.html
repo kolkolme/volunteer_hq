@@ -9,8 +9,8 @@
       // Apply saved palette/theme BEFORE React renders to prevent flash
       (function() {
         try {
-          var p = localStorage.getItem('palette') || 'white';
-          var t = localStorage.getItem('theme') || 'light';
+          var p = localStorage.getItem('palette') || 'beeline';
+          var t = localStorage.getItem('theme') || 'dark';
           document.documentElement.setAttribute('data-palette', p);
           document.documentElement.setAttribute('data-theme', t);
         } catch(e) {}
