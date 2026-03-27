@@ -174,18 +174,18 @@ const OverviewTab = ({ onNavigate }) => {
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         {kpiCards.map(({ label, value, sub, icon: Icon, from, to, glow }) => (
           <div
             key={label}
-            className={`glass-card rounded-2xl p-5 border border-white/10 hover:shadow-lg ${glow} transition-all duration-300`}
+            className={`glass-card rounded-2xl p-3 sm:p-5 border border-white/10 hover:shadow-lg ${glow} transition-all duration-300`}
           >
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${from} ${to} flex items-center justify-center mb-3 shadow-lg`}>
-              <Icon className="w-5 h-5 text-white" />
+            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br ${from} ${to} flex items-center justify-center mb-2 sm:mb-3 shadow-lg`}>
+              <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <p className="text-2xl font-bold glass-title">{value}</p>
+            <p className="text-xl sm:text-2xl font-bold glass-title">{value}</p>
             <p className="text-xs font-semibold glass-title opacity-70 mt-0.5 leading-tight">{label}</p>
-            <p className="text-xs glass-subtitle opacity-50 mt-1">{sub}</p>
+            <p className="text-xs glass-subtitle opacity-50 mt-1 hidden sm:block">{sub}</p>
           </div>
         ))}
       </div>
@@ -275,16 +275,16 @@ const OverviewTab = ({ onNavigate }) => {
               <p className="text-xs glass-subtitle opacity-60">Топ-3 волонтёра по активности</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-xl mx-auto">
             {podiumSlots.map(({ key, emoji, border, order, scale }) =>
               podium[key] ? (
                 <div
                   key={key}
-                  className={`${order} ${scale} glass-card rounded-2xl p-4 text-center border ${border} transition-transform`}
+                  className={`${order} ${scale} glass-card rounded-2xl p-2 sm:p-4 text-center border ${border} transition-transform`}
                 >
-                  <div className="text-4xl mb-2">{emoji}</div>
-                  <p className="font-semibold glass-title text-sm leading-tight">{podium[key].full_name}</p>
-                  <p className="text-xs glass-subtitle opacity-60 mt-1">{podium[key].score} очков</p>
+                  <div className="text-2xl sm:text-4xl mb-1 sm:mb-2">{emoji}</div>
+                  <p className="font-semibold glass-title text-xs sm:text-sm leading-tight truncate">{podium[key].full_name}</p>
+                  <p className="text-xs glass-subtitle opacity-60 mt-0.5 sm:mt-1">{podium[key].score} оч.</p>
                 </div>
               ) : null
             )}
@@ -725,11 +725,11 @@ const VolunteersTab = () => {
         </select>
       </div>
 
-      <div className="flex gap-4 text-sm glass-subtitle opacity-60">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm glass-subtitle opacity-60">
         <span>Найдено: <strong className="glass-title">{filtered.length}</strong></span>
-        <span>·</span>
+        <span className="hidden sm:inline">·</span>
         <span>С разрешением: <strong className="glass-title text-emerald-400">{filtered.filter((u) => u.has_permit).length}</strong></span>
-        <span>·</span>
+        <span className="hidden sm:inline">·</span>
         <span>Волонтёров: <strong className="glass-title">{filtered.filter((u) => u.role?.code === 'volunteer').length}</strong></span>
       </div>
 
@@ -836,7 +836,7 @@ const PermitsTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         {[
           { label: 'Могут получить',    val: eligible.length,    key: 'eligible' },
           { label: 'Разрешение выдано', val: granted.length,     key: 'granted'  },
@@ -845,12 +845,12 @@ const PermitsTab = () => {
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className={`glass-card rounded-2xl p-4 text-center transition-all ${
+            className={`glass-card rounded-2xl p-2 sm:p-4 text-center transition-all ${
               filter === key ? 'ring-2 ring-indigo-500/60' : 'hover:opacity-80'
             }`}
           >
-            <p className="text-3xl font-bold glass-title">{val}</p>
-            <p className="text-xs glass-subtitle opacity-60 mt-1">{label}</p>
+            <p className="text-xl sm:text-3xl font-bold glass-title">{val}</p>
+            <p className="text-xs glass-subtitle opacity-60 mt-1 leading-tight">{label}</p>
           </button>
         ))}
       </div>
