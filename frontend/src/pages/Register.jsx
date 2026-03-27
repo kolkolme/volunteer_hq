@@ -21,30 +21,56 @@ const Register = () => {
     photo_url: '',
     role_code: '',
   })
-  const [error, setError] = useState('')
+  const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const { register } = useAuth()
   const navigate = useNavigate()
 
+  // Parse DRF errors into flat { fieldName: string } map
+  const parseErrors = (errorData) => {
+    if (typeof errorData === 'string') return { _general: errorData }
+    const result = {}
+    for (const [key, val] of Object.entries(errorData)) {
+      const msg = Array.isArray(val) ? val.join(' ') : String(val)
+      if (key === 'non_field_errors' || key === 'detail') {
+        result._general = msg
+      } else {
+        result[key] = msg
+      }
+    }
+    return result
+  }
+
   const handleRoleSelect = (roleCode) => {
     setFormData({ ...formData, role_code: roleCode })
     setStep(2)
+    setErrors({})
   }
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
+    // Clear field error on change
+    if (errors[name]) setErrors((prev) => { const n = { ...prev }; delete n[name]; return n })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    setError('')
+    setErrors({})
 
-    if (formData.password !== formData.password2) {
-      setError('Пароли не совпадают')
+    // Client-side validation
+    const clientErrors = {}
+    if (!formData.username.trim()) clientErrors.username = 'Обязательное поле'
+    else if (/\s/.test(formData.username)) clientErrors.username = 'Логин не должен содержать пробелы'
+    if (!formData.email.trim()) clientErrors.email = 'Обязательное поле'
+    if (!formData.first_name.trim()) clientErrors.first_name = 'Обязательное поле'
+    if (!formData.last_name.trim()) clientErrors.last_name = 'Обязательное поле'
+    if (formData.password.length < 8) clientErrors.password = 'Минимум 8 символов'
+    if (formData.password !== formData.password2) clientErrors.password2 = 'Пароли не совпадают'
+
+    if (Object.keys(clientErrors).length > 0) {
+      setErrors(clientErrors)
       setLoading(false)
       return
     }
@@ -57,11 +83,17 @@ const Register = () => {
     if (result.success) {
       navigate('/')
     } else {
-      setError(typeof result.error === 'string' ? result.error : JSON.stringify(result.error))
+      setErrors(parseErrors(result.error))
     }
 
     setLoading(false)
   }
+
+  // Helper to render a field error
+  const FieldError = ({ name }) =>
+    errors[name] ? (
+      <p className="text-red-500 text-xs mt-1">{errors[name]}</p>
+    ) : null
 
   // Step 1: Role selection
   if (step === 1) {
@@ -140,6 +172,13 @@ const Register = () => {
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
+          {/* General error (non-field) */}
+          {errors._general && (
+            <div className="rounded-xl border border-red-400 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {errors._general}
+            </div>
+          )}
+
           <div>
             <label htmlFor="username" className="block text-sm font-medium glass-subtitle mb-1">
               Имя пользователя
@@ -150,10 +189,11 @@ const Register = () => {
               type="text"
               required
               placeholder="Логин"
-              className="w-full"
+              className={`w-full${errors.username ? ' border-red-400' : ''}`}
               value={formData.username}
               onChange={handleChange}
             />
+            <FieldError name="username" />
           </div>
 
           <div>
@@ -166,10 +206,11 @@ const Register = () => {
               type="email"
               required
               placeholder="email@example.com"
-              className="w-full"
+              className={`w-full${errors.email ? ' border-red-400' : ''}`}
               value={formData.email}
               onChange={handleChange}
             />
+            <FieldError name="email" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -183,10 +224,11 @@ const Register = () => {
                 type="text"
                 required
                 placeholder="Имя"
-                className="w-full"
+                className={`w-full${errors.first_name ? ' border-red-400' : ''}`}
                 value={formData.first_name}
                 onChange={handleChange}
               />
+              <FieldError name="first_name" />
             </div>
             <div>
               <label htmlFor="last_name" className="block text-sm font-medium glass-subtitle mb-1">
@@ -198,10 +240,11 @@ const Register = () => {
                 type="text"
                 required
                 placeholder="Фамилия"
-                className="w-full"
+                className={`w-full${errors.last_name ? ' border-red-400' : ''}`}
                 value={formData.last_name}
                 onChange={handleChange}
               />
+              <FieldError name="last_name" />
             </div>
           </div>
 
@@ -218,6 +261,7 @@ const Register = () => {
               value={formData.contact}
               onChange={handleChange}
             />
+            <FieldError name="contact" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -233,6 +277,7 @@ const Register = () => {
                 value={formData.birth_date}
                 onChange={handleChange}
               />
+              <FieldError name="birth_date" />
             </div>
             <div>
               <label htmlFor="gender" className="block text-sm font-medium glass-subtitle mb-1">
@@ -267,6 +312,7 @@ const Register = () => {
                 value={formData.photo_url}
                 onChange={handleChange}
               />
+              <FieldError name="photo_url" />
             </div>
           )}
 
@@ -280,10 +326,11 @@ const Register = () => {
               type="password"
               required
               placeholder="Минимум 8 символов"
-              className="w-full"
+              className={`w-full${errors.password ? ' border-red-400' : ''}`}
               value={formData.password}
               onChange={handleChange}
             />
+            <FieldError name="password" />
           </div>
 
           <div>
@@ -296,17 +343,12 @@ const Register = () => {
               type="password"
               required
               placeholder="Повторите пароль"
-              className="w-full"
+              className={`w-full${errors.password2 ? ' border-red-400' : ''}`}
               value={formData.password2}
               onChange={handleChange}
             />
+            <FieldError name="password2" />
           </div>
-
-          {error && (
-            <div className="text-red-600 text-sm text-center">
-              {error}
-            </div>
-          )}
 
           <IosButton
             type="submit"

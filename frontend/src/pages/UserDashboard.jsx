@@ -76,13 +76,6 @@ const UserDashboard = () => {
     })
   }, [user])
 
-  useEffect(() => {
-    const palette = localStorage.getItem('palette') || 'white'
-    const theme = document.documentElement.getAttribute('data-theme') || 'light'
-    const matched = APPEARANCE_OPTIONS.find((item) => item.palette === palette && item.theme === theme)
-    setAppearanceId(matched?.id || 'light')
-  }, [])
-
   const fetchData = async () => {
     try {
       const today = new Date().toISOString().split('T')[0]

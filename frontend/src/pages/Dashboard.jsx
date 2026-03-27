@@ -623,7 +623,7 @@ const Dashboard = () => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-5 h-5 text-amber-500" />
-              <span className="text-sm font-semibold text-amber-600">Студент</span>
+              <span className="text-sm font-semibold text-amber-600">{user?.role?.title || 'Волонтёр'}</span>
             </div>
             <h1 className="text-2xl font-bold glass-title">{user?.full_name || user?.username}</h1>
             <div className="flex flex-wrap gap-3 mt-1 text-xs glass-subtitle">
