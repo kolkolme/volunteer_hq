@@ -14,7 +14,7 @@ const Layout = ({ children }) => {
   return (
     <div className="app-shell">
       {/* Header */}
-      <header className="glass-panel" style={{ height: '56px', display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between' }}>
+      <header className="glass-panel" style={{ height: '56px', display: 'flex', alignItems: 'center', padding: '0 12px', justifyContent: 'space-between', overflow: 'hidden' }}>
         <Link to="/" style={{ textDecoration: 'none' }}>
           <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
             Volunteer <span style={{ color: 'var(--accent)' }}>HQ</span>
@@ -51,7 +51,7 @@ const Layout = ({ children }) => {
       </header>
 
       {/* Main Content */}
-      <main style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 20px 48px' }}>
+      <main className="w-full overflow-x-hidden" style={{ maxWidth: '1280px', margin: '0 auto', padding: '16px 12px 48px' }}>
         {children}
       </main>
     </div>

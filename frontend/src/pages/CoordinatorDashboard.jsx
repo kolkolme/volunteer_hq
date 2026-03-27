@@ -251,7 +251,7 @@ const CoordinatorDashboard = () => {
   const [activeTab, setActiveTab] = useState('complaints')
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20 lg:pb-6">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-6 pb-20 lg:pb-6 overflow-x-hidden">
       {/* Header */}
       <GlassCard className="p-4 sm:p-6">
         <div className="flex items-center gap-4">
