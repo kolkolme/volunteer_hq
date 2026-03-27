@@ -125,7 +125,7 @@ const Profile = () => {
                         {new Date(participation.event.date_start).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                       {participation.event.address && (
-                        <p className="text-xs glass-subtitle truncate">{participation.event.address}</p>
+                        <a href={participation.event.address} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline truncate block">🔗 Ссылка на конференцию</a>
                       )}
                       {participation.comment && (
                         <p className="text-xs glass-subtitle mt-1"><span className="font-medium">Комм.:</span> {participation.comment}</p>

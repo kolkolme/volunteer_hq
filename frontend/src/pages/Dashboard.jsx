@@ -185,7 +185,7 @@ const MyLecturesTab = () => {
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold glass-title truncate">{ev.title}</p>
-                    <p className="text-xs glass-subtitle mt-0.5">{ev.city?.title} · {ev.event_type?.title}</p>
+                    <p className="text-xs glass-subtitle mt-0.5">{ev.event_type?.title}</p>
                     <p className="text-xs glass-subtitle mt-0.5">
                       {ev.date_start
                         ? new Date(ev.date_start).toLocaleDateString('ru', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
@@ -222,7 +222,7 @@ const MyLecturesTab = () => {
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold glass-title truncate">{p.event?.title}</p>
-                    <p className="text-xs glass-subtitle mt-0.5">{p.event?.city?.title} · {p.event?.event_type?.title}</p>
+                    <p className="text-xs glass-subtitle mt-0.5">{p.event?.event_type?.title}</p>
                     <p className="text-xs glass-subtitle mt-0.5">
                       {p.event?.date_start
                         ? new Date(p.event.date_start).toLocaleDateString('ru', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
@@ -468,11 +468,13 @@ const AcceptLectureTab = () => {
         <GlassCard key={p.id} className="p-5">
           <div className="mb-3">
             <h4 className="font-semibold glass-title text-lg">{p.event?.title}</h4>
-            <p className="text-sm glass-subtitle mt-1">{p.event?.event_type?.title} · {p.event?.city?.title}</p>
+            <p className="text-sm glass-subtitle mt-1">{p.event?.event_type?.title}</p>
             <p className="text-sm glass-subtitle">
               {p.event?.date_start ? new Date(p.event.date_start).toLocaleString('ru', { dateStyle: 'long', timeStyle: 'short' }) : '—'}
             </p>
-            {p.event?.address && <p className="text-sm glass-subtitle">📍 {p.event.address}</p>}
+            {p.event?.address && (
+              <a href={p.event.address} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline">🔗 Ссылка на конференцию</a>
+            )}
             {p.event?.description && <p className="text-sm glass-subtitle mt-2 line-clamp-3">{p.event.description}</p>}
           </div>
           <div className="flex gap-3">
@@ -559,7 +561,6 @@ const Dashboard = () => {
             </div>
             <h1 className="text-2xl font-bold glass-title">{user?.full_name || user?.username}</h1>
             <div className="flex flex-wrap gap-3 mt-1 text-xs glass-subtitle">
-              {user?.city?.title && <span>📍 {user.city.title}</span>}
               {user?.avg_rating !== undefined && <span>⭐ Рейтинг: {Number(user.avg_rating).toFixed(1)}</span>}
               {user?.has_permit && <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full font-medium">Разрешение координатора</span>}
             </div>

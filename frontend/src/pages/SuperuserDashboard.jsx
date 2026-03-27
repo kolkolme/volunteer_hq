@@ -154,7 +154,6 @@ const SuperuserDashboard = () => {
               <tr className="border-b border-opacity-10 border-gray-300">
                 <th className="px-6 py-3 text-left text-xs font-semibold opacity-60 uppercase">Пользователь</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold opacity-60 uppercase">Роль</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold opacity-60 uppercase">Город</th>
                 <th className="px-6 py-3 text-left text-xs font-semibold opacity-60 uppercase">Статус</th>
               </tr>
             </thead>
@@ -177,7 +176,6 @@ const SuperuserDashboard = () => {
                       {u.role?.title || 'Без роли'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm opacity-70">{u.city?.title || '—'}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       u.is_active ? 'bg-green-500 bg-opacity-20 text-green-700' : 'bg-gray-500 bg-opacity-20 text-gray-700'

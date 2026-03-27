@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
-import { Calendar, MapPin, Users, ChevronDown, ChevronUp, CheckCircle, AlertCircle, Search, UserPlus, Zap } from 'lucide-react'
+import { Calendar, Users, ChevronDown, ChevronUp, CheckCircle, AlertCircle, Search, UserPlus, Zap } from 'lucide-react'
 
 const EventAssignment = () => {
   const [events, setEvents] = useState([])
@@ -22,18 +22,13 @@ const EventAssignment = () => {
 
   useEffect(() => {
     if (selectedEventId) {
-      const selectedEvent = events.find((evt) => evt.id === Number(selectedEventId))
-      if (selectedEvent?.city?.id) {
-        fetchVolunteersByCity(selectedEvent.city.id)
-      } else {
-        setAvailableVolunteers([])
-      }
+      fetchAllVolunteers()
       fetchAssignedVolunteers(selectedEventId)
       setSelectedVolunteers([])
       setSearchQuery('')
       setMessage('')
     }
-  }, [selectedEventId, events])
+  }, [selectedEventId])
 
   const fetchEvents = async () => {
     setLoading(true)
@@ -58,13 +53,9 @@ const EventAssignment = () => {
     }
   }
 
-  const fetchVolunteersByCity = async (cityId) => {
-    if (!cityId) {
-      setAvailableVolunteers([])
-      return
-    }
+  const fetchAllVolunteers = async () => {
     try {
-      const response = await api.get(`/api/v1/users/?city=${cityId}&is_active=true`)
+      const response = await api.get('/api/v1/users/?is_active=true')
       const users = response.data.results || response.data
       setAvailableVolunteers(users.filter((u) => u.role?.code === 'volunteer'))
     } catch (error) {
@@ -160,7 +151,7 @@ const EventAssignment = () => {
             Назначение волонтёров
           </h1>
         </div>
-        <p className="text-sm opacity-80 mt-2">Выберите мероприятие и назначьте на него волонтёров из города</p>
+        <p className="text-sm opacity-80 mt-2">Выберите мероприятие и назначьте на него волонтёров</p>
       </div>
 
       {/* Progress Steps */}
@@ -260,10 +251,6 @@ const EventAssignment = () => {
                           {new Date(event.date_start).toLocaleDateString('ru-RU')}
                         </span>
                         <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
-                          {event.city?.title || '—'}
-                        </span>
-                        <span className="flex items-center gap-1">
                           <Users className="h-3.5 w-3.5" />
                           {event.assigned_count ?? 0}/{event.volunteers_count_max}
                         </span>
@@ -287,8 +274,8 @@ const EventAssignment = () => {
                     <div className="px-4 pb-4 pt-0 border-t border-white border-opacity-10">
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
                         <div className="glass-card rounded-xl p-3">
-                          <p className="text-xs opacity-60">Адрес</p>
-                          <p className="text-sm font-medium mt-1">{event.address}</p>
+                          <p className="text-xs opacity-60">Ссылка</p>
+                          <a href={event.address} target="_blank" rel="noopener noreferrer" className="text-sm font-medium mt-1 text-blue-500 hover:underline block truncate">{event.address || '—'}</a>
                         </div>
                         <div className="glass-card rounded-xl p-3">
                           <p className="text-xs opacity-60">Тип</p>
@@ -351,13 +338,6 @@ const EventAssignment = () => {
               <p className="text-sm opacity-70 mt-1">{selectedEvent.event_type?.title || '—'}</p>
             </div>
             <div className="glass-card rounded-2xl p-5">
-              <p className="text-xs font-semibold opacity-60 uppercase tracking-wide">Город</p>
-              <p className="text-lg font-bold mt-2 flex items-center gap-2">
-                <MapPin className="h-4 w-4 opacity-60" />
-                {selectedEvent.city?.title || '—'}
-              </p>
-            </div>
-            <div className="glass-card rounded-2xl p-5">
               <p className="text-xs font-semibold opacity-60 uppercase tracking-wide">Свободные слоты</p>
               <p className="text-3xl font-bold mt-2 text-green-500">{selectedEvent.free_slots ?? 0}</p>
               <p className="text-xs opacity-60 mt-1">из {selectedEvent.volunteers_count_max}</p>
@@ -410,7 +390,7 @@ const EventAssignment = () => {
             {/* Volunteer Cards */}
             {filteredVolunteers.length === 0 ? (
               <p className="opacity-60 text-center py-8">
-                {availableVolunteers.length === 0 ? 'Нет доступных волонтёров в городе мероприятия' : 'Никого не найдено'}
+                {availableVolunteers.length === 0 ? 'Нет доступных волонтёров' : 'Никого не найдено'}
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">

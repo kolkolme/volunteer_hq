@@ -182,7 +182,7 @@ class EventParticipationViewSet(viewsets.ModelViewSet):
     ordering_fields = ['id', 'created_at', 'updated_at']
 
     def get_queryset(self):
-        queryset = EventParticipation.objects.select_related('event', 'event__city', 'user', 'user__city', 'user__role')
+        queryset = EventParticipation.objects.select_related('event', 'event__event_type', 'user', 'user__role')
         user = self.request.user
         if user.role.code in {'volunteer', 'user'}:
             queryset = queryset.filter(user=user)
@@ -213,8 +213,8 @@ class MyEventsView(APIView):
     def get(self, request):
         # Events the user participates in
         participations = EventParticipation.objects.filter(user=request.user).select_related(
-            'event', 'event__city', 'event__event_type',
-            'user', 'user__city', 'user__role',
+            'event', 'event__event_type',
+            'user', 'user__role',
         )
         # Events created by the user (self-created lectures) that may not have a participation
         participated_event_ids = participations.values_list('event_id', flat=True)
@@ -222,7 +222,7 @@ class MyEventsView(APIView):
             created_by=request.user
         ).exclude(
             id__in=participated_event_ids
-        ).select_related('city', 'event_type')
+        ).select_related('event_type')
 
         participation_data = EventParticipationSerializer(participations, many=True).data
         created_data = EventListSerializer(created_events, many=True, context={'request': request}).data
@@ -304,7 +304,7 @@ class MyParticipationsView(APIView):
     def get(self, request):
         participations = EventParticipation.objects.filter(
             user=request.user
-        ).select_related('event', 'event__city', 'event__event_type', 'event__created_by').order_by('-created_at')
+        ).select_related('event', 'event__event_type', 'event__created_by').order_by('-created_at')
 
         serializer = MyParticipationListSerializer(participations, many=True)
         return Response(serializer.data)
@@ -337,7 +337,7 @@ class LectureRatingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        qs = LectureRating.objects.select_related('event', 'event__created_by', 'user', 'user__city').all()
+        qs = LectureRating.objects.select_related('event', 'event__created_by', 'user').all()
         if user.role.code in {'volunteer', 'user'}:
             return qs.filter(user=user)
         return qs

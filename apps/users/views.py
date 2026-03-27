@@ -232,8 +232,8 @@ class VolunteerApplicationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.role.code in {'admin', 'superuser'}:
-            return VolunteerApplication.objects.select_related('user', 'user__city', 'reviewed_by').all()
-        return VolunteerApplication.objects.select_related('user', 'user__city').filter(user=user)
+            return VolunteerApplication.objects.select_related('user', 'reviewed_by').all()
+        return VolunteerApplication.objects.select_related('user').filter(user=user)
 
     def get_serializer_class(self):
         user = self.request.user
