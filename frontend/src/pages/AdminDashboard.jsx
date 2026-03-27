@@ -1088,7 +1088,7 @@ const AdminDashboard = () => {
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
       {/* Header — matches user Dashboard style */}
-      <GlassCard className="p-6">
+      <GlassCard className="p-4 sm:p-6">
         <div className="flex items-center gap-4">
           {user?.photo_url && (
             <img src={user.photo_url} alt="" className="w-16 h-16 rounded-2xl object-cover" />
@@ -1114,12 +1114,12 @@ const AdminDashboard = () => {
       </GlassCard>
 
       {/* Tabs */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all shrink-0 ${
               activeTab === id
                 ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30'
                 : 'glass-card glass-subtitle hover:opacity-80'

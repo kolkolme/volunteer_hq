@@ -91,7 +91,7 @@ body {
 
 .app-shell {
   min-height: 100vh;
-  padding: 24px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -99,9 +99,15 @@ body {
   transition: background 0.5s ease, color 0.5s ease;
 }
 
+@media (min-width: 640px) {
+  .app-shell {
+    padding: 24px;
+  }
+}
+
 .glass-panel {
   position: relative;
-  padding: 18px 20px;
+  padding: 12px 14px;
   border-radius: 20px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
@@ -111,9 +117,17 @@ body {
   transition: transform 0.24s ease, box-shadow 0.24s ease, background 0.5s ease, border-color 0.5s ease;
 }
 
-.glass-panel:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-primary);
+@media (min-width: 640px) {
+  .glass-panel {
+    padding: 18px 20px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass-panel:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-primary);
+  }
 }
 
 .glass-panel::before {
@@ -273,11 +287,13 @@ body {
   z-index: 1;
 }
 
-.glass-card:hover {
-  transform: translateY(-5px) scale(1.01);
-  box-shadow: var(--shadow-primary), 0 0 28px var(--glow-primary);
-  border-color: var(--border-primary);
-  background: var(--card-bg);
+@media (hover: hover) and (pointer: fine) {
+  .glass-card:hover {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: var(--shadow-primary), 0 0 28px var(--glow-primary);
+    border-color: var(--border-primary);
+    background: var(--card-bg);
+  }
 }
 
 .dashboard-card {
@@ -286,6 +302,15 @@ body {
 
 .dashboard-card:hover {
   transform: translateY(-2px);
+}
+
+/* Hide scrollbar utility (for mobile tab bars) */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* Custom scrollbar */

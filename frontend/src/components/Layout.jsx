@@ -18,59 +18,59 @@ const Layout = ({ children }) => {
       {/* Header */}
       <header className="glass-panel">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-12 sm:h-16">
             <div className="flex items-center">
               <Link to="/" className="hover:opacity-80 transition-opacity">
-                <h1 className="text-xl font-bold glass-title">Volunteer HQ</h1>
+                <h1 className="text-lg sm:text-xl font-bold glass-title">Volunteer HQ</h1>
               </Link>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Palette Selector */}
               <PaletteSelector />
 
               {/* User Menu */}
-              <div className="flex items-center space-x-3">
-                <div className="text-right">
+              <div className="flex items-center space-x-1 sm:space-x-3">
+                <div className="text-right hidden sm:block">
                   <p className="text-sm font-medium glass-title">{user?.full_name || user?.username}</p>
                   <p className="text-xs glass-subtitle">{user?.role?.title}</p>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex space-x-1 sm:space-x-2">
                   <Link
                     to="/profile"
-                    className="btn-ios p-3"
+                    className="btn-ios p-2 sm:p-3"
                   >
-                    <User className="h-5 w-5" />
+                    <User className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Link>
                   {isSuperuser() && (
                     <Link
                       to="/superuser"
-                      className="btn-ios p-3"
+                      className="btn-ios p-2 sm:p-3"
                     >
-                      <Shield className="h-5 w-5" />
+                      <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
                     </Link>
                   )}
                   {isAdmin() && (
                     <>
                       <Link
                         to="/admin"
-                        className="btn-ios p-3"
+                        className="btn-ios p-2 sm:p-3"
                       >
-                        <BarChart3 className="h-5 w-5" />
+                        <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
                       </Link>
                       <Link
                         to="/admin/assign"
-                        className="btn-ios p-3"
+                        className="btn-ios p-2 sm:p-3"
                       >
-                        <Users className="h-5 w-5" />
+                        <Users className="h-4 w-4 sm:h-5 sm:w-5" />
                       </Link>
                     </>
                   )}
                   <button
                     onClick={handleLogout}
-                    className="btn-ios p-3"
+                    className="btn-ios p-2 sm:p-3"
                   >
-                    <LogOut className="h-5 w-5" />
+                    <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
                   </button>
                 </div>
               </div>
@@ -80,7 +80,7 @@ const Layout = ({ children }) => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-4 sm:py-6 px-3 sm:px-6 lg:px-8">
         {children}
       </main>
     </div>

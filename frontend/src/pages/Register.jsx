@@ -67,7 +67,7 @@ const Register = () => {
   if (step === 1) {
     return (
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <GlassCard className="max-w-lg w-full p-8">
+        <GlassCard className="max-w-lg w-full p-4 sm:p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold glass-title">Регистрация</h2>
             <p className="glass-subtitle mt-2">Кто вы?</p>
@@ -121,7 +121,7 @@ const Register = () => {
   // Step 2: Registration form
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <GlassCard className="max-w-md w-full p-8">
+      <GlassCard className="max-w-md w-full p-4 sm:p-8">
         <div className="mb-6">
           <button
             onClick={() => setStep(1)}

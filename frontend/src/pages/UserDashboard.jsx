@@ -310,7 +310,7 @@ const UserDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Welcome */}
-      <div className="glass-card rounded-3xl p-8 md:p-12 relative overflow-hidden">
+      <div className="glass-card rounded-3xl p-5 sm:p-8 md:p-12 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 opacity-10 pointer-events-none">
           <BookOpen className="w-full h-full" />
         </div>
@@ -319,59 +319,79 @@ const UserDashboard = () => {
             <Sparkles className="w-6 h-6 text-blue-500" />
             <p className="text-sm font-semibold text-blue-600">Добро пожаловать!</p>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">
             Привет, {user?.full_name || user?.username}! 👋
           </h1>
           <p className="text-lg opacity-80 mb-6 max-w-2xl">
             Вы вошли как <span className="font-semibold text-blue-600">Посетитель</span>.
             Управляйте профилем, прошлыми лекциями, заявкой в волонтёры и внешним видом кабинета.
           </p>
-          <div className="flex flex-wrap gap-3 text-sm opacity-75">
-            <span className="glass-card px-4 py-2 rounded-2xl">4 вкладки для visitor-flow</span>
-            <span className="glass-card px-4 py-2 rounded-2xl">История лекций и обратная связь</span>
-            <span className="glass-card px-4 py-2 rounded-2xl">Заявка в волонтёры</span>
+          <div className="flex flex-wrap gap-2 text-xs sm:text-sm opacity-75">
+            <span className="glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl">4 вкладки для visitor-flow</span>
+            <span className="glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl">История лекций и обратная связь</span>
+            <span className="glass-card px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl">Заявка в волонтёры</span>
           </div>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="glass-card rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <div className="flex items-center justify-between">
+      <div className="grid grid-cols-3 gap-3">
+        <div className="glass-card rounded-2xl p-3 sm:p-6 transition-all duration-300">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
             <div>
-              <p className="text-sm font-medium opacity-70 mb-2">Доступных лекций</p>
-              <p className="text-3xl font-bold">{events.length}</p>
+              <p className="text-xs sm:text-sm font-medium opacity-70 mb-1 sm:mb-2 leading-tight">Доступных лекций</p>
+              <p className="text-2xl sm:text-3xl font-bold">{events.length}</p>
             </div>
-            <Calendar className="w-12 h-12 opacity-30" />
+            <Calendar className="w-7 h-7 sm:w-12 sm:h-12 opacity-20 hidden sm:block" />
           </div>
         </div>
-        <div className="glass-card rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <div className="flex items-center justify-between">
+        <div className="glass-card rounded-2xl p-3 sm:p-6 transition-all duration-300">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
             <div>
-              <p className="text-sm font-medium opacity-70 mb-2">Посещено</p>
-              <p className="text-3xl font-bold">{attendedLecturesCount}</p>
+              <p className="text-xs sm:text-sm font-medium opacity-70 mb-1 sm:mb-2 leading-tight">Посещено</p>
+              <p className="text-2xl sm:text-3xl font-bold">{attendedLecturesCount}</p>
             </div>
-            <Star className="w-12 h-12 opacity-30" />
+            <Star className="w-7 h-7 sm:w-12 sm:h-12 opacity-20 hidden sm:block" />
           </div>
         </div>
-        <div className="glass-card rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <div className="flex items-center justify-between">
+        <div className="glass-card rounded-2xl p-3 sm:p-6 transition-all duration-300">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
             <div>
-              <p className="text-sm font-medium opacity-70 mb-2">Пропущено</p>
-              <p className="text-3xl font-bold">{missedLecturesCount}</p>
+              <p className="text-xs sm:text-sm font-medium opacity-70 mb-1 sm:mb-2 leading-tight">Пропущено</p>
+              <p className="text-2xl sm:text-3xl font-bold">{missedLecturesCount}</p>
             </div>
-            <Clock className="w-12 h-12 opacity-30" />
+            <Clock className="w-7 h-7 sm:w-12 sm:h-12 opacity-20 hidden sm:block" />
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-6">
-        <div className="glass-card rounded-3xl p-4 h-fit">
+      {/* Mobile tab bar */}
+      <div className="flex gap-2 overflow-x-auto pb-1 lg:hidden scrollbar-none">
+        {TAB_ITEMS.map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-medium text-sm whitespace-nowrap shrink-0 transition-all ${
+                isActive ? 'bg-blue-500 text-white shadow-md' : 'glass-card glass-subtitle'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-6">
+        {/* Desktop sidebar */}
+        <div className="hidden lg:block glass-card rounded-3xl p-4 h-fit">
           <div className="space-y-2">
             {TAB_ITEMS.map((tab) => {
               const Icon = tab.icon
               const isActive = activeTab === tab.id
-
               return (
                 <button
                   key={tab.id}
@@ -459,7 +479,7 @@ const UserDashboard = () => {
           {activeTab === 'history' && (
             <>
               <div className="glass-card rounded-2xl overflow-hidden">
-                <div className="px-6 py-5 border-b border-opacity-20 border-gray-300">
+                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-opacity-20 border-gray-300">
                   <div className="flex items-center gap-3">
                     <Star className="w-5 h-5 opacity-60" />
                     <h3 className="text-xl font-bold">Прошлые лекции</h3>
@@ -470,7 +490,7 @@ const UserDashboard = () => {
                     pastEvents.map((event, idx) => {
                       const feedback = ratings[event.id] || {}
                       return (
-                        <div key={`${event.id}-${idx}`} className="px-6 py-5 space-y-4">
+                        <div key={`${event.id}-${idx}`} className="px-4 sm:px-6 py-4 sm:py-5 space-y-4">
                           <div className="flex items-center justify-between gap-4 flex-wrap">
                             <div>
                               <h4 className="font-semibold">{event.title}</h4>
@@ -602,7 +622,7 @@ const UserDashboard = () => {
 
               {/* Events list */}
               <div className="glass-card rounded-2xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-white/10 flex items-center gap-3">
+                <div className="px-4 sm:px-6 py-4 border-b border-white/10 flex items-center gap-3">
                   <Calendar className="w-5 h-5 opacity-60" />
                   <h3 className="text-xl font-bold">Предстоящие лекции</h3>
                   <span className="ml-auto text-sm opacity-60">{filteredEvents.length} лекций</span>
@@ -613,7 +633,7 @@ const UserDashboard = () => {
                       const isApplied = appliedEventIds.has(event.id)
                       const isApplying = applyingId === event.id
                       return (
-                        <div key={event.id} className="px-6 py-5">
+                        <div key={event.id} className="px-4 sm:px-6 py-4 sm:py-5">
                           <div className="flex items-start justify-between gap-4 flex-wrap">
                             <div className="flex-1 min-w-0">
                               <h4 className="text-base font-semibold mb-1">{event.title}</h4>
